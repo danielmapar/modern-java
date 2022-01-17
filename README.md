@@ -535,16 +535,16 @@
             ```
         * ```java
             public class Main {
-            enum StopLight {
-                RED,
-                YELLOW,
-                GREEN
-            }
+                enum StopLight {
+                    RED,
+                    YELLOW,
+                    GREEN
+                }
 
-            public static void main(String[] args) {
-                StopLight myStoplight = Stoplight.RED; 
-                System.out.println(myStoplight);
-            }
+                public static void main(String[] args) {
+                    StopLight myStoplight = Stoplight.RED; 
+                    System.out.println(myStoplight);
+                }
             }
             ```
 
@@ -552,9 +552,319 @@
 
     * The `Scanner` class can read and parse simple text. Here are some key points to keep in mind:
 
-        * It parses primitive types and String types into tokens.
+        * It parses primitive types and `String` types into tokens.
 
         * By default it uses whitespaces to delimitate each word. However, it can also use regular expressions.
 
-        * The Scanner class can read from several different types of sources, like strings, files and System.in (to get input from the command line).
+        * The Scanner class can read from several different types of sources, like strings, files and `System.in` (to get input from the command line).
+
+        * ```java
+            Scanner scanner = new Scanner(System.in);
+            ```
+        
+        * ```java
+            Scanner scanner = new Scanner("This is a line");
+            System.out.println(scanner.nextLine());
+            // This is a line
+            ```
+        
+        * ```java
+            Scanner scanner = new Scanner("This is a line");
+
+            while(scanner.hasNext()) {
+                // In this next example, we are using the next method to read the first token. The next method finds and returns the next complete token.
+                System.out.println(scanner.next());
+            }
+            ```
+
+* Dates and Calendar
+
+    * The Date Class
+
+        * The Date class represents a specific instance in time. We can instantiate a new Date object like so: `Date date = new Date();`
+    
+    * The Calendar Class
+
+        * The Calendar class is an abstract class that provides methods for manipulating date and time. The basic syntax for instantiating a new Calendar object looks like this: `Calendar calendar = Calendar.getInstance();`
+
+
+* RegEx
+
+    * Regular expressions (often abbreviated as `RegEx`) are used to match or find strings based on a specialized syntax.
+
+    * The `regEx` package in Java contains three classes to support these operations
+
+        * Pattern
+        * Matcher
+        * PatternSyntaxException.
+    
+    * To use RegEx in Java, we have to do two main theings:
+
+        * Create a `Pattern` based on a specialized syntax
+        * Use the `Matcher` to determine if the pattern exists in the String provided
+    
+    * Helpful RegEx Resources
+
+        * As a Java developer, do you need to thoroughly learn and memorize RegEx syntax? Not necessarily. Unless you're using it very heavily, it will probably suffice to look up the expression you need when you need it. Along those lines, here are some handy resources that you may want to bookmark for later reference:
+
+            * For use of the `RegEx` class in Java, see the official Java docs on regular expression syntax.
+            
+            * For coming up with the regular expression itself, try playing with [`RegExr.com`](https://regexr.com/). You can enter some text and then try out different expressions; when there is a match, the text will be highlighted. The page also has a handy cheatsheet for commonly needed RegEx characters.
+    
+    * ```java
+        String emailRegex = "^(.+)@(.+).(.+)$"
+        Pattern pattern = Pattern.compile(emailRegex)
+
+        Matcher matcher = pattern.matcher("jeff@example.com")
+
+        ```
+    
+* String Methods
+
+    * Java provides advanced memory management for `String` objects by using a `String pool`. A String pool is a way of storing only **one copy of a String**.
+
+    * To understand this, we have to look at what is happening in memory when we create Strings and assign them to variables. Strings in Java are **immutable**, meaning they cannot be changed after they are created. When we "change" the String in a variable, what actually happens is that, behind the scenes, Java creates a **new String** in the String pool—and changes the variable's reference value to point to this new String. The old String object may remain in place, unchanged.
+
+    * Also note that **multiple variables may use the same String reference**. This means that if we have two variables with exactly the same String (e.g., "Hello") they will all reference the same String object.
+
+    * ![strings](./images/strings.png)
+
+    * ![strings2](./images/strings2.png)
+
+    * ![string_ref](./images/string_ref.png)
+
+    * ![strings_methods](./images/strings_methods.png)
+
+### Generics and Collections
+
+* Generics allow us to write methods that handle a whole group of different data types—in other words, to write methods that are generic.
+
+    * The benefits of using Generics are:
+
+        * Stronger type checks at compile time.
+        * They remove the need to cast objects.
+        * They allow developers to implement generic algorithms.
+
+    * Put another way, generics are a way to parameterize class types into classes, methods, and variables.
+
+    * `List<String> strings = new ArrayList<String>();`
+
+        * ArrayList is `non-synchronized`. Vector is `synchronized`. ArrayList increments 50% of its current size if element added exceeds its capacity. Vector increments 100% of its current size if element added exceeds its capacity
+
+* Collections
+
+    * Collections are a set of data structures that were introduced in Java 5.0 to solve problems with consistency between data structures and to address performance issues. They were developed with the following goals in mind:
+
+        * High performance/efficiency.
+        * High degree of interoperability. The new data structures all needed to behave similarly to each other. In practice, this means that Collections data structures implement similar interfaces and extend similar abstract classes.
+        * Integrate with existing APIs seamlessly. The Java framework had to extend and adapt to the new data structures easily. They needed to integrate the new data structures seamlessly with little disruption to the existing API.
+    
+    * The Collections framework consists of several different data structure classes like `List`, `Set`, `Maps` and `Queues`. In addition, there are utility classes like `Collections` and `Arrays` that provide methods for sorting and creating empty lists. Below is an example in which we create a List of type `String` and then add and remove data.
+
+    * ```java
+        List<String> myList = new ArrayList<String>();
+
+        myList.add("one");
+        myList.add("two");
+        myList.add("three");
+
+        //We could also remove the element "one" by using the index 0 instead of the value "one".
+        myList.remove("one");
+        ```
+    
+    * ```java
+        List<String> names = new LinkedList<String>();
+        names.add("Mike");
+        names.add("Bob");
+        names.add("Alice");
+
+        Iterator<String> iterator = names.iterator();
+
+        while(iterator.hasNext()){
+            System.out.println(iterator.next());
+        }
+        ```
+
+    * ```java
+        public class CollectionsExercise {
+
+            public static void main(String[] args) {
+
+                List<String> listOfItems = new LinkedList<String>();
+                listOfItems.add("Mike");
+                listOfItems.add("Bob");
+                listOfItems.add("Alice");
+
+                for (String name : listOfItems) {
+                    System.out.println(name);
+                }
+            }
+        }
+        ```
+
+* Sorting Collections
+
+    * The collections framework provides a sort method that can be used to sort lists containing the following types of objects:
+
+        * Strings
+        * Wrapper objects
+        * User-defined classes
+    
+    * Strings
+        * A list of Strings can be sorted by simply passing the list to the `Collections.sort()` method. In the example bellow, the names will be sorted in ascending order.
+        
+        * ```java
+            List<String> names = new LinkedList<String>();
+
+            names.add("Mike");
+            names.add("Bob");
+            names.add("Alice");
+
+            Collections.sort(names);
+            ```
+    
+    * Wrapper Objects
+        * Wrapper objects were introduced in Java to wrap primitive variable types into objects. In the example below, the primitive `int` values are being converted to `Integer` objects and then sorted.
+
+        * ```java
+            List<Integer> numbers = new LinkedList<Integer>();
+
+            numbers.add(201);
+            numbers.add(100);
+            numbers.add(101);
+
+            Collections.sort(numbers);
+            ```
+    
+    * User-Defined Classes
+
+        * User-defined classes will need to implement the `Comparable Interface` in order to use the `Collections.sort()` method. The Comparable Interface provides a method, `compareTo`, which is used to compare two objects of the same type. In the example below we are using the Person object's name field to compare `Person` objects. This line of code, `name.compareTo(person.name)`, handles all of the hard work.
+
+        * ```java
+            import java.util.*;  
+
+            class Person implements Comparable<Person> {  
+                public String name;  
+                public Person(String name) {  
+                    this.name = name;  
+                }  
+                public int compareTo(Person person) {  
+                    return name.compareTo(person.name);  
+                }   
+            }  
+            public class PersonSort {
+                public static void main(String[] args) {
+                    ArrayList<Person> people = new ArrayList<Person>();
+                    people.add(new Person("Same"));
+                    people.add(new Person("Mike"));
+                    people.add(new Person("Apple"));
+
+                    // This implementation is a stable, adaptive, iterative mergesort ... This implementation dumps the specified list into an array, sorts the array, and iterates over the list resetting each element from the corresponding position in the array.
+                    Collections.sort(people);
+                    for (Person person : people) {
+                    System.out.println(person.name);
+                    }
+                }
+            }
+            ```
+
+### Advanced Collections
+
+* Maps
+
+    * Without Maps: Linear Lookup Time
+
+    * When we have a list of objects and need to search for an item in that list, the time required to search will grow linearly with the number of objects. The more items added to the list, the longer it will take to iterate over all of the items. Processing a list of items like this is said to take linear time, because a graph of the relationship looks like a straight line.
+
+    * With Maps: Constant Lookup Time
+        * Maps provide a solution. Maps are data structures that use `key-value pairs`. That is, every value in the map is paired with a key. When we want to retrieve a value, we simply provide the corresponding key.
+
+        * Importantly, this retrieval is performed in constant time, meaning that the amount of time required to retrieve an item from the map takes a certain, fixed (constant) amount of time, and this time doesn't change based on how many items we add.
+    
+    * **Map is an Interface**
+
+        * The Java Map is an Interface that provides three different distinct views of the data:
+
+            * A list of the keys
+            * A list of the values
+            * A set of key-value mappings
+    
+    * ```java
+        Map<String, Person> mapOfPeople = new HashMap<String, Person>();
+
+        Person mike = new Person("Mike", "mike@email.com");
+        Person shaun = new Person("Shaun", "shaun@email.com");
+        Person sally = new Person("Sally", "sally@email.com");
+        Person cesar = new Person("Cesar", "cesar@email.com");
+
+        mapOfPeople.put(mike.getEmail(), mike);
+        mapOfPeople.put(shaun.getEmail(), shaun);
+        mapOfPeople.put(sally.getEmail(), sally);
+        mapOfPeople.put(cesar.getEmail(), cesar);
+
+        mapOfPeople.get("mike@email.com");
+
+        for (String email : mapOfPeople.keySet()) {
+            System.out.println(email);
+        }
+        ```
+
+* Sets
+
+    * Sometimes, as with the example of a list of phone numbers, it's important for the values in a collection to be unique. Fortunately, we have `Sets`. A Set is a collection type that has no duplicate values.
+
+    * Note that Set extends the `Collection` interface and therefore provides the same methods as other `Collection` data structures do.
+
+    * Concrete Implementations
+        * There are three concrete implementations for the Set interface:
+            * HashSet
+            * TreeSet
+            * LinkedHashSet
+    
+    * **Each of these implementations vary, but all of them enforce the no-duplicate-values requirement of the Set interface.**
+
+    * In the Collections framework, the Set is an interface and cannot be directly used to instantiate a class. In the example below we are creating a Set of strings. Notice, we are using the concrete class HashSet to instantiate our Set object.
+
+    * ```java
+        Set<String> mySet = new HashSet<String>();
+
+        mySet.add("Hello");
+        mySet.add("Hello");
+        mySet.add("Hellos");
+
+        String foundObject;
+
+        for (String text : mySet) {
+            if(text.equals("Hello"){
+                foundObject  = text;
+            }
+        }
+        ```
+
+* Queues
+
+    * Sometimes we need to process items in a `First-In, First-Out (FIFO)` order.
+
+    * Queues are data structures that allow us to process items in a `First-In, First-Out (FIFO)` order. The first item placed in a queue is also the first one removed from the queue.
+
+    * Some key points about Queues in Java:
+
+        * `Queue` is an interface that implements the `Collection` interface
+        * We put newly added elements at the end of the queue
+        * We pop elements off the front of the queue
+    
+    * In the collections framework the Queue is an interface and cannot be directly used to instantiate a class. In the example below, we are creating a Queue of strings. Notice that we are using the concrete class `LinkedList` to instantiate our `Queue`.
+
+    * ```java
+        Queue<String> myQueue = new LinkedList<String>();
+        // Queue queueB = new PriorityQueue();
+
+        myQueue.add("Hi");
+        myQueue.add("There");
+
+        while (!myQueue.isEmpty()) {
+            System.out.println(myQueue.poll());
+        }
+
+        ```
 
