@@ -2,24 +2,24 @@ package com.danielmapar;
 
 import java.util.*;
 
-class Person implements Comparable<Person> {
+class PersonV1 implements Comparable<PersonV1> {
     public String name;
-    public Person(String name) {
+    public PersonV1(String name) {
         this.name = name;
     }
-    public int compareTo(Person person) {
+    public int compareTo(PersonV1 person) {
         return name.compareTo(person.name);
     }
 }
 public class PersonSort {
     public static void main(String[] args) {
-        ArrayList<Person> people = new ArrayList<Person>();
-        people.add(new Person("Same"));
-        people.add(new Person("Mike"));
-        people.add(new Person("Apple"));
+        ArrayList<PersonV1> people = new ArrayList<PersonV1>();
+        people.add(new PersonV1("Same"));
+        people.add(new PersonV1("Mike"));
+        people.add(new PersonV1("Apple"));
 
         Collections.sort(people);
-        for (Person person : people) {
+        for (PersonV1 person : people) {
             System.out.println(person.name);
         }
     }
