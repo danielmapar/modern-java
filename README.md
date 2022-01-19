@@ -1207,3 +1207,145 @@
             }
         }
         ```
+
+* Stream API
+
+    * What is a Stream?
+
+        * **A stream is a sequence of elements**.
+
+        * Streams are useful because they allow us to process collection, one element at a time. They can process elements in many ways, such as (but not limited to) filtering or transforming elements, sorting elements, or computing statistics such as the sum or average.
+
+        ![stream](./images/stream.png)
+    
+    * A stream pipeline consists of creating a stream, calling intermediate operations on the stream, and then terminating the stream using a terminal operation.   
+        * Streams are `single-use`. Once you do an operation on a Stream, you cannot to any more operations on that same stream. This means intermediate operations always return a brand new Stream, never the original.
+        * Streams are `lazily evaluated`. **No computation happens until the very end**, when the terminal operation is called.
+    
+    * ```java
+        void printScores(List<Student> students) {
+        return students.stream()
+            .filter(Objects::nonNull)
+            .mapToInt(Student::getScore)
+            .forEach(System.out::println);
+        }
+        ```
+
+    * First, the `stream()` method creates a stream from the students list.
+
+    * This stream pipeline has two intermediate methods: the `filter()` method removes the elements of the stream that are null, and `mapToInt()` transforms each student into an `int`. Notice that each of these methods returns another Stream: `filter()` returns a `Stream<Student>`, and `mapToInt()` returns an `IntStream`.
+
+    * ```java
+        Stream.of("hello", "world")
+            .map(String::toUpperCase)
+            .collect(Collectors.joining(" ", "", "!"));
+        ```
+
+* Stream API: Collectors
+
+    * What is a Collector?
+
+        * A `Collector` is a **terminal stream operation that accumulates stream elements into a container**.
+    
+    * The `collect()` method is a terminal operation that aggregates streams of elements. `Collectors` can be passed to `collect()` to determine what kind of collection is created.
+
+    * ```java
+        Set<String> s = stringList.stream().collect(Collectors.toSet());
+        ```
+
+    * Here, the collector aggregates the elements into a `Set`. There are collectors for all the common data structures such as lists, sets, and maps.
+
+    * ```java
+        Map<Year, Long> graduatingClassSizes = studentList.stream()
+        .collect(Collectors.groupingBy(
+        Student::getGraduationYear, Collectors.counting());
+        ```
+
+    * Here, `groupingBy()` is used to collect elements into a `Map`. `Collectors.counting()` counts the number of values for each key, so, in this example, it will count how many students there are for each graduation year.
+
+* Optional Type
+
+    * `java.util.Optional` is a container object that may or may not contain a single, non-null value.
+    * Optional is an alternative to using null to represent the absence of a value.
+
+    * ```java
+        int getTopScore(List<Student> students) {
+            return students.stream()
+            .filter(Objects::nonNull)
+            .mapToInt(Student::getScore)
+            .max()
+            .orElse(0);
+        }
+        ```
+
+    * Here, the `max()` method actually returns an `OptionalInt`, not an int. If the students list is empty, the `max()` method will return an empty optional.
+
+    * If `max()` returns an `OptionalInt` with a value, that value will be used. However, if `max()` returns `OptionalInt.empty()`, the call to `orElse()` makes sure that a default value of `0` will be returned.
+
+    * This example also shows you how, in addition to `Optional<T>`, Java also has optional types that are specialized for `int, long, and double` primitives. These classes avoid the need for auto-boxing and auto-unboxing of their values.
+
+    * When you're designing Java APIs, you should consider using `Optional` instead of null to represent the absence of values.
+
+    * `Optional` can have methods invoked on it without throwing `NullPointerException`. The Stream API uses optional types for many of its terminal operations.
+
+* ```java
+    import java.time.LocalDate;
+    import java.time.Year;
+    import java.time.ZoneId;
+    import java.util.Comparator;
+    import java.util.List;
+    import java.util.Map;
+    import java.util.stream.Collectors;
+
+    public final class SummarizeClients {
+        public static void main(String[] args) {
+
+            List<UdacisearchClient> clients = ClientStore.getClients();
+            int numClients = clients.size();
+            int totalQuarterlySpend =
+                clients
+                    .stream()
+                    .mapToInt(UdacisearchClient::getQuarterlyBudget)
+                    .sum();
+
+            double averageBudget =
+                clients
+                    .stream()
+                    .mapToDouble(UdacisearchClient::getQuarterlyBudget)
+                    .average()
+                    .orElse(0);
+
+            long nextExpiration =
+                clients
+                    .stream()
+                    .min(Comparator.comparing(UdacisearchClient::getContractEnd))
+                    .map(UdacisearchClient::getId)
+                    .orElse(-1L);
+
+            List<ZoneId> representedZoneIds =
+                clients
+                    .stream()
+                    .flatMap(c -> c.getTimeZones().stream())
+                    .distinct()  // Or use Collectors.toSet()
+                    .collect(Collectors.toList());
+
+            Map<Year, Long> contractsPerYear =
+                clients
+                    .stream()
+                    .collect(Collectors.groupingBy(SummarizeClients::getContractYear, Collectors.counting()));
+
+            System.out.println("Num clients: " + numClients);
+            System.out.println("Total quarterly spend: " + totalQuarterlySpend);
+            System.out.println("Average budget: " + averageBudget);
+            System.out.println("ID of next expiring contract: " + nextExpiration);
+            System.out.println("Client time zones: " + representedZoneIds);
+            System.out.println("Contracts per year: " + contractsPerYear);
+        }
+
+        private static Year getContractYear(UdacisearchClient client) {
+            LocalDate contractDate =
+                LocalDate.ofInstant(client.getContractStart(), client.getTimeZones().get(0));
+            return Year.of(contractDate.getYear());
+        }
+    }
+    ```
