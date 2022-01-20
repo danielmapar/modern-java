@@ -18,15 +18,15 @@
         }
         ```
 
-* `strictfp`: is a modifier in the Java programming language that restricts floating-point calculations to ensure portability. The strictfp command was introduced into Java with the Java virtual machine (JVM) version 1.2 and is available for use on all currently updated Java VMs.
+* `strictfp`: is a modifier in the Java programming language that restricts **floating-point calculations to ensure portability**. The `strictfp` command was introduced into Java with the Java virtual machine (JVM) version 1.2 and is available for use on all currently updated Java VMs.
 
 * `synchronized`: Synchronization in java is the capability to control the access of multiple threads to any shared resource. In the Multithreading concept, multiple threads try to access the shared resources at a time to produce inconsistent results. The synchronization is necessary for reliable communication between threads.
 
-* `throw` and `throws`: The throw keyword is used to throw an exception explicitly. It can throw only one exception at a time. The throws keyword can be used to declare multiple exceptions, separated by a comma.
+* `throw` and `throws`: The throw keyword is used to `throw` an exception explicitly. It can throw only one exception at a time. The `throws` keyword can be used to declare multiple exceptions, separated by a comma.
 
 * `transient`: 
-    * Serialization is the process of converting an object into a byte stream, and deserialization is the opposite of it.
-    * When we mark any variable as transient, then that variable is not serialized. Since transient fields aren't present in the serialized form of an object, the deserialization process would use the default values for such fields when creating an object out of the serialized form.
+    * Serialization is the process of converting an object into a `byte stream`, and deserialization is the opposite of it.
+    * When we mark any variable as `transient`, then that variable is not serialized. Since transient fields aren't present in the serialized form of an object, the deserialization process would use the default values for such fields when creating an object out of the serialized form.
     * Example: 
         ```java
         public class Book implements Serializable {
@@ -102,7 +102,7 @@
 
     * Java uses two different memory regions when running an application: The stack and the heap.
 
-        * The stack is used to store primitives and object references, while the heap is used to store the objects themselves.
+        * **The stack is used to store primitives and object references, while the heap is used to store the objects themselves.**
         * Items in the stack get added and removed as a given method executes, while objects in the heap stay until the application is done (or at least, until there are no object references using them from anywhere in the program, at which point they are removed by the garbage collector).
         * Items are removed from the stack in a Last-In-First-Out (LIFO) order, meaning that the last element you added to the stack is the first that gets popped off the stack.
         * Remember that the items in a stack are only maintained as long as the related method is running. By the time a given method has finished running, all of the items on the stack for that method will have been removed.
@@ -123,6 +123,7 @@
         * Public means the class can be accessed from everywhere. If you have a method on a class that you want to expose to all other classes, then use this access modifier.
 
         * Private means only the defining class can access the data. This provides security, by not allowing other classes to change the data directly. Instead, they must make changes to the data via the provided methods only.
+            * Private classes are allowed, but only as inner or nested classes. If you have a private inner or nested class, then access is restricted to the scope of that outer class.
 
         * Protected means that access is restricted to the defining class, package, or subclass. This will be useful when we get into subclasses and inheritance in a later lesson, as it will allow our subclasses to use variables and methods from the parent class.
 
@@ -161,7 +162,7 @@
 
 * JavaDoc
 
-    * avaDoc is a documentation generator that produces a searchable HTML document defining the classes and interfaces of an application. This makes it easy for you and other developers to understand the API of an application.
+    * JavaDoc is a documentation generator that produces a searchable HTML document defining the classes and interfaces of an application. This makes it easy for you and other developers to understand the API of an application.
 
     * JavaDoc Comments
 
