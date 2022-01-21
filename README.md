@@ -1973,3 +1973,151 @@
 
     * The secret is sauce **Java Reflection**. **Jackson uses Java's Reflection APIs to examine the UdacisearchClient class structure at run time, and make serialization/deserialization decisions based on what it finds.**.
 
+### Design Pattern
+
+* SOLID: Principles of Good Software Design
+
+* What are the characteristics of good software design? Software engineers have been philosophising about this question since the early days of software development.
+
+* SOLID is one of the prevaliing frameworks for thinking about this question. This mnemonic was coined by the American software engineer Robert C. Martin in 2000.
+
+    * Single Responsibility Principle
+        * Each class should have only one responsibility.
+    * Open-Closed Principle
+        * Software should be open for extension but closed for modification. You should be able to do inheritance or composition without change the source code of the class.
+    * Liskov Substitution Principle
+        * Objects that implement the same interface should be interchangeable without breaking the program.
+        * If your code take a `List` parameter, you should not care if it is an `ArrayList` or `LinkedList`, your code should work no matter what.
+    * Interface Segregation Principle
+        * Your code should only depend on interfaces that it actually uses.
+    * Dependency Inversion Principle
+        * All parts of your code should depend on interfaces, or abstractions. Implementation details should depend on interfaces, not the other way around.
+
+* Design Patterns
+
+    * A design pattern is a general solution to certain kinds of common design issues that occur in software development.
+
+    * These patterns provide guidelines for how you can organize and write software. They will not design your code for you — It's still up to you to fill in the blanks and customize each pattern to fit your use case.
+
+    * This lesson covers three broad categories of software design patterns:
+        * Creational patterns
+        * Behavioral patterns
+        * Structural patterns
+
+    * Creational Patterns
+
+        * A creational design pattern is any design pattern that concerns how objects in your program are created. These patterns can help you manage the creation of objects as your code becomes increasingly complex.
+
+        * Singleton Pattern
+            * A class that has only one instance, but no clear owner.
+            * You want that instance to be available everywhere in your code.
+            * The instance is initialized only when it's first used (also known as lazy initialization).
+
+        * ![singleton](./images/singleton.png) 
+    
+    * ```java
+        import java.util.Objects;
+
+        public final class Database {
+            private static Database database;
+
+            private Database() {}
+
+            public static Database getInstance() {
+                if (database == null) {
+                    database = new Database();
+                    database.connect("/usr/local/data/users.db");
+                }
+                return database;
+            }
+
+            // Connects to the remote database.
+            private void connect(String url) {
+                Objects.requireNonNull(url);
+            }
+
+            public static void main(String[] args) {
+                Database a = Database.getInstance();
+                Database b = Database.getInstance();
+
+                System.out.println(a == b);
+            }
+        }
+        ```
+
+* Edge Case: Singleton Anti-pattern
+
+    * Disadvantages of Singletons
+
+        * If you misuse the singleton pattern, it can be detrimental to your software design.
+
+            * Singletons can cause **brittle** assumptions in your code. If later on, you decide you need **multiple instances** of the class, you might have to refactor a bunch of code.
+            * Code that depends on singletons can become **hard to test**.
+
+        * If you're itching for a code example of how the singleton pattern can result in difficult-to-test code, and how Dependency Injection can improve testability, you can look forward to the Dependency Injection exercise near the end of this lesson!
+
+* Abstract Factory
+
+    * A **factory** is anything that creates objects. Factories are useful for hiding construction details from callers.
+
+        * If the thing creating objects is a method, it's known as a **factory method**. You've already seen some examples of factory methods, such as `Stream.of()`.
+        * If the thing creating objects is also an object, it's known as an **abstract factory**. These are useful when you want to separate construction of objects into a completely separate Java interface.
+    
+    * When to Use Abstract Factories
+        * You want to hide construction details from callers.
+        * You want to encapsulate construction of several related objects into a single Java interface.
+
+    * ```java
+        package com.udacity.webcrawler.parser;
+
+        /**
+        * A factory interface that supplies instances of {@link PageParser} that have common parameters
+        * (such as the timeout and ignored words) preset from injected values.
+        */
+        public interface PageParserFactory {
+
+            /**
+            * Returns a {@link PageParser} that parses the given {@link url}.
+            */
+            PageParser get(String url);
+        }
+
+        ///////////////////////////////////////
+
+        package com.udacity.webcrawler.parser;
+
+        import com.udacity.webcrawler.Timeout;
+        import com.udacity.webcrawler.profiler.Profiler;
+
+        import javax.inject.Inject;
+        import java.time.Duration;
+        import java.util.List;
+        import java.util.regex.Pattern;
+
+        /**
+        * A {@link PageParserFactory} that wraps its returned instances using a {@link Profiler}.
+        */
+        final class PageParserFactoryImpl implements PageParserFactory {
+            private final Profiler profiler;
+            private final List<Pattern> ignoredWords;
+            private final Duration timeout;
+
+            @Inject
+            PageParserFactoryImpl(
+                Profiler profiler, @IgnoredWords List<Pattern> ignoredWords, @Timeout Duration timeout) {
+                this.profiler = profiler;
+                this.ignoredWords = ignoredWords;
+                this.timeout = timeout;
+            }
+
+            @Override
+            public PageParser get(String url) {
+                // Here, parse the page with the initial timeout (instead of just the time remaining), to make
+                // the download less likely to fail. Deadline enforcement should happen at a higher level.
+                PageParser delegate = new PageParserImpl(url, timeout, ignoredWords);
+                return profiler.wrap(PageParser.class, delegate);
+            }
+        }
+        ```
+    
+    ![abstract_factory](./images/abstract_factory.png)
