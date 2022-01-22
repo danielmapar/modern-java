@@ -2056,7 +2056,7 @@
 
         * If you're itching for a code example of how the singleton pattern can result in difficult-to-test code, and how Dependency Injection can improve testability, you can look forward to the Dependency Injection exercise near the end of this lesson!
 
-* Abstract Factory
+* Creational Patterns - Abstract Factory
 
     * A **factory** is anything that creates objects. Factories are useful for hiding construction details from callers.
 
@@ -2121,3 +2121,644 @@
         ```
     
     ![abstract_factory](./images/abstract_factory.png)
+
+* Creational Patterns - Builder
+
+    * A **mutable factory** that constructs the state of a to-be-created object, property by property, and then build the object.
+    * Usually supports method chaining.
+    * Often used to create immutable data objects.
+
+    ![factories](./images/factories.png)
+
+    * Example
+
+    * ```java
+        import java.time.Duration;
+        import java.time.Instant;
+        import java.time.ZoneId;
+
+        public final class UdacisearchClient {
+            private final String name;
+            private final long id;
+            private final int quarterlyBudget;
+            private final int numEmployees;
+            private final Instant contractStart;
+            private final Duration contractLength;
+            private final ZoneId timeZone;
+            private final String billingAddress;
+
+            private UdacisearchClient(
+                String name,
+                long id,
+                int quarterlyBudget,
+                int numEmployees,
+                Instant contractStart,
+                Duration contractLength,
+                ZoneId timeZone,
+                String billingAddress) {
+                this.name = name;
+                this.id = id;
+                this.quarterlyBudget = quarterlyBudget;
+                this.numEmployees = numEmployees;
+                this.contractStart = contractStart;
+                this.contractLength = contractLength;
+                this.timeZone = timeZone;
+                this.billingAddress = billingAddress;
+            }
+
+            public String getName() {
+                return name;
+            }
+
+            public long getId() {
+                return id;
+            }
+
+            public int getQuarterlyBudget() {
+                return quarterlyBudget;
+            }
+
+            public int getNumEmployees() {
+                return numEmployees;
+            }
+
+            public Instant getContractStart() {
+                return contractStart;
+            }
+
+            public Duration getContractLength() {
+                return contractLength;
+            }
+
+            public ZoneId getTimeZone() {
+                return timeZone;
+            }
+
+            public String getBillingAddress() {
+                return billingAddress;
+            }
+
+            @Override
+            public String toString() {
+                return "UdacisearchClient{" +
+                    "name='" + getName() + '\'' +
+                    ", id=" + getId() +
+                    ", quarterlyBudget=" + getQuarterlyBudget() +
+                    ", numEmployees=" + getNumEmployees() +
+                    ", contractStart=" + getContractStart() +
+                    ", contractLength=" + getContractLength() +
+                    ", timeZone=" + getTimeZone() +
+                    ", billingAddress='" + getBillingAddress() + '\'' +
+                    '}';
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (!(o instanceof UdacisearchClient)) return false;
+                UdacisearchClient that = (UdacisearchClient) o;
+                return id == that.id &&
+                    quarterlyBudget == that.quarterlyBudget &&
+                    numEmployees == that.numEmployees &&
+                    name.equals(that.name) &&
+                    contractStart.equals(that.contractStart) &&
+                    contractLength.equals(that.contractLength) &&
+                    timeZone.equals(that.timeZone) &&
+                    billingAddress.equals(that.billingAddress);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(
+                    name,
+                    id,
+                    quarterlyBudget,
+                    numEmployees,
+                    contractStart,
+                    contractLength,
+                    timeZone,
+                    billingAddress);
+            }
+
+            public static final class Builder {
+                private String name = "";
+                private long id = 0;
+                private int quarterlyBudget = 0;
+                private int numEmployees = 0;
+                private Instant contractStart = Instant.EPOCH;
+                private Duration contractLength = Duration.ZERO;
+                private ZoneId timeZone = ZoneId.of("Etc/UTC");
+                private String billingAddress = "";
+
+                public Builder setName(String name) {
+                    this.name = name;
+                    return this;
+                }
+
+                public Builder setId(long id) {
+                    this.id = id;
+                    return this;
+                }
+
+                public Builder setQuarterlyBudget(int quarterlyBudget) {
+                    this.quarterlyBudget = quarterlyBudget;
+                    return this;
+                }
+
+                public Builder setNumEmployees(int numEmployees) {
+                    this.numEmployees = numEmployees;
+                    return this;
+                }
+
+                public Builder setContractStart(Instant contractStart) {
+                    this.contractStart = contractStart;
+                    return this;
+                }
+
+                public Builder setContractLength(Duration contractLength) {
+                    this.contractLength = contractLength;
+                    return this;
+                }
+
+                public Builder setTimeZone(ZoneId timeZone) {
+                    this.timeZone = timeZone;
+                    return this;
+                }
+
+                public Builder setBillingAddress(String billingAddress) {
+                    this.billingAddress = billingAddress;
+                    return this;
+                }
+
+                public UdacisearchClient build() {
+                    return new UdacisearchClient(
+                        name,
+                        id,
+                        quarterlyBudget,
+                        numEmployees,
+                        contractStart,
+                        contractLength,
+                        timeZone,
+                        billingAddress);
+                }
+            }
+        }
+        ```
+    
+    * Java has static nested classes but it sounds like you're looking for a top-level static class. Java has no way of making a top-level class static.
+    
+    * ```java
+        import java.time.Duration;
+        import java.time.Instant;
+        import java.time.ZoneId;
+
+        public final class Main {
+
+            public static void main(String[] args) {
+                UdacisearchClient client =
+                    new UdacisearchClient.Builder()
+                        .setName("CatFacts LLC")
+                        .setId(17)
+                        .setQuarterlyBudget(8000)
+                        .setNumEmployees(5)
+                        .setContractStart(Instant.now())
+                        .setContractLength(Duration.ofDays(180))
+                        .setTimeZone(ZoneId.of("America/Los_Angeles"))
+                        .setBillingAddress("555 Meowmers Ln, Riverside, CA 92501")
+                        .build();
+
+                System.out.println(client);
+            }
+        }
+        ```
+
+* Behavioral Patterns
+
+    * A behavioral design pattern is a pattern that involves how different objects interact. This is a very broad category. This lesson covers the following patterns:
+
+        * The Strategy pattern
+        * The Template Method pattern
+
+
+* Behavioral Patterns - Strategy
+
+    * What is the Strategy Pattern?
+
+        * You define an **interface** to represent a kind of task or problem.
+        * Each concrete implementation defines a different "strategy" for solving the task.
+        * The strategies can be swapped for each other because callers code against the interface.
+        * Great example of the Liskov Substitution Principle
+    
+    * ```java
+        package com.danielmapar;
+        import java.util.HashMap;
+        import java.util.Map;
+        import java.util.function.BinaryOperator;
+
+        public final class Calculate {
+            public static void main(String[] args) {
+                if (args.length != 3) {
+                    System.out.println("Usage: Calculate [int] [operator] [int]");
+                    return;
+                }
+
+                Calculator calculator = new Calculator();
+                calculator.registerOperation("+", (a, b) -> a + b);
+                calculator.registerOperation("-", (a, b) -> a - b);
+                calculator.registerOperation("/", (a, b) -> a / b);
+                calculator.registerOperation("*", (a, b) -> a * b);
+
+                int a = Integer.parseInt(args[0]);
+                String operator = args[1];
+                int b = Integer.parseInt(args[2]);
+
+                System.out.println(calculator.calculate(a, operator, b));
+            }
+        }
+
+        final class Calculator {
+            private final Map<String, BinaryOperator<Integer>> operators = new HashMap<>();
+
+            public void registerOperation(String symbol, BinaryOperator<Integer> operator) {
+                operators.put(symbol.strip(), operator);
+            }
+
+            public int calculate(int a, String operator, int b) {
+                return operators.get(operator).apply(a, b);
+            }
+        }
+        ```
+
+* Behavioral Patterns - Template Method
+
+    * What is the Template Method Pattern?
+        * You define a **base class** or interface for a procedure or algorithm, but leave **empty placeholders** for some parts of the procedure.
+        * Each placeholder is a blank or default **method** in the base class.
+        * This base class acts as a **template**.
+        * Callers fill in the blanks by **extending** the base class and **overriding** the placeholder methods.
+    
+    * ![design_pattern_examples](./images/design_pattern_examples.png)
+
+* Structural Patterns
+
+    * What are Structural Patterns?
+        * A **structural design pattern** is a design pattern that involve how objects fit together to form the structure of the software.
+
+* Structural Patterns - Adapter Pattern
+
+    * When Do We Use the Adapter Pattern?
+
+        * You can use an adapter whenever you need to transform one API or interface into another. Adapters allow classes with otherwise incompatible interfaces to work together!
+
+        * Adapters typically "wrap" an existing interface to adapt it to a different interface. One common use of the adapter pattern is to wrap legacy APIs, but adapters can be used with all sorts of APIs.
+
+    * Example - Lets Adapt he `BufferedReader` class to read handle multiple `Paths` / `BufferedReader`
+
+    * ```java
+        import java.io.BufferedReader;
+        import java.io.Closeable;
+        import java.io.IOException;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.util.ArrayList;
+        import java.util.Collections;
+        import java.util.List;
+
+        public final class MultiFileReader implements Closeable {
+
+            private final List<BufferedReader> readers;
+
+            public MultiFileReader(List<Path> paths) {
+                readers = new ArrayList<>(paths.size());
+                try {
+                    for (Path path : paths) {
+                        readers.add(Files.newBufferedReader(path));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    close();
+                }
+            }
+
+            public List<BufferedReader> getReaders() {
+                return Collections.unmodifiableList(readers);
+            }
+
+            @Override
+            public void close() {
+                for (BufferedReader reader : readers) {
+                    try {
+                        reader.close();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+        }
+        ```
+
+    * ```java
+        import java.io.BufferedReader;
+        import java.io.Writer;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.util.List;
+        import java.util.Objects;
+        import java.util.PriorityQueue;
+        import java.util.stream.Collectors;
+
+        public final class MergeShards {
+            public static void main(String[] args) throws Exception {
+                if (args.length != 2) {
+                    System.out.println("Usage: MergeShards [input folder] [output file]");
+                    return;
+                }
+
+                List<Path> inputs = Files.walk(Path.of(args[0]), 1).skip(1).collect(Collectors.toList());
+                Path outputPath = Path.of(args[1]);
+
+                try (MultiFileReader multiReader = new MultiFileReader(inputs)) {
+                    PriorityQueue<WordEntry> words = new PriorityQueue<>();
+                    for (BufferedReader reader : multiReader.getReaders()) {
+                        String word = reader.readLine();
+                        if (word != null) {
+                            words.add(new WordEntry(word, reader));
+                        }
+                    }
+
+                    try (Writer writer = Files.newBufferedWriter(outputPath)) {
+                        while (!words.isEmpty()) {
+                            WordEntry entry = words.poll();
+                            writer.write(entry.word);
+                            writer.write(System.lineSeparator());
+                            String word = entry.reader.readLine();
+                            if (word != null) {
+                                words.add(new WordEntry(word, entry.reader));
+                            }
+                        }
+                    }
+                }
+            }
+
+            private static final class WordEntry implements Comparable<WordEntry> {
+                private final String word;
+                private final BufferedReader reader;
+
+                private WordEntry(String word, BufferedReader reader) {
+                    this.word = Objects.requireNonNull(word);
+                    this.reader = Objects.requireNonNull(reader);
+                }
+
+                @Override
+                public int compareTo(WordEntry other) {
+                    return word.compareTo(other.word);
+                }
+            }
+        }
+        ```
+    
+    * ![adapter](./images/adapter.png)
+
+* Structural Patterns - Decorator Pattern
+
+    * ![decorator](./images/decorator.png)
+
+    * ```java
+        import java.io.BufferedReader;
+        import java.io.File;
+        import java.io.FileReader;
+        import java.io.IOException;
+        import java.io.Reader;
+        import java.util.Objects;
+
+        public final class CountReads {
+
+            public static final class CountingReader extends Reader {
+                private int count = 0;
+
+                private final Reader delegate;
+
+                CountingReader(Reader delegate) {
+                    this.delegate = Objects.requireNonNull(delegate);
+                }
+
+                public int getCount() {
+                    return count;
+                }
+
+                @Override
+                public int read(char[] cbuf, int off, int len) throws IOException {
+                    count++;
+                    return delegate.read(cbuf, off, len);
+                }
+
+                @Override
+                public void close() throws IOException {
+                    delegate.close();
+
+                }
+            }
+
+            public static void main(String[] args) throws Exception {
+                try (FileReader reader = new FileReader(new File("randomtext.txt"))) {
+                    CountingReader unbufferedReads = new CountingReader(reader);
+                    CountingReader bufferedReads = new CountingReader(new BufferedReader(unbufferedReads));
+
+                    char[] data = new char[100];
+                    while (bufferedReads.read(data) != -1);
+
+                    System.out.println("Calls to BufferedReader.read(): " + bufferedReads.getCount());
+                    System.out.println("Calls to FileReader.read(): " + unbufferedReads.getCount());
+                }
+            }
+        }
+        ```
+    
+    * In this demo, we wrote a decorator that counted the number of reads to a Reader. The decorator proved that the BufferedReader reduced the number of reads from disk by about 90%. Pretty good!
+
+    * Adapter vs Decorator
+
+        * These patterns both "wrap" another object, called the **delegate**.
+        * An `Adapter` returns a **different interface** than the delegate.
+        * A `Decorator` returns the **same interface**, but with **added functionality or responsibilities**.
+        * A `Proxy` is similar to a `Decorator`, but the proxy usually **controls or manages access to the delegate**.
+    
+    * ![structural](./images/structural.png)
+
+* Dependency Injection
+
+    * What is a Dependency?
+
+        * A **dependency** is anything your code needs to work, such as an external library, an environment variable, a remote website, or a database.
+
+        * In the context of dependency injection, a dependency usually refers to an object, class, or interface that your code imports, creates, or uses.
+    
+    * What is Dependency Injection?
+        * Dependency Injection, or DI, is a design pattern that **moves the creation of dependencies to outside of your code**. Instead of creating objects, you tell the DI framework to create the objects for you, and then you inject those objects into your class.
+
+    * Using `@Inject` Annotations
+
+        * To inject objects from a DI framework, you can add `@Inject` annotations to your code. You can add them directly to instance fields:
+
+        * ```java
+            class CourseRegistrar {
+                @Inject private Database db;
+                @Inject private Clock clock;
+                @Inject private RegistrationFactory factory;
+
+                boolean registerStudentForCourse(Student s, int courseId) {
+                    Course c = db.getCourse(courseId);
+                    if (clock.instant().isAfter(c.getRegistrationDeadline())) return false;
+                    if (!s.getPassedCourses().containsAll(c.getPrereqs())) return false;
+                    db.createRegistration(factory.create(courseId, s.getId()));
+                    return true;
+                }
+            }
+            ```
+        
+        * ... or, you can add `@Inject` annotations to constructors:
+
+        * ```java
+            class CourseRegistrar {
+                private final Database db;
+                private final Clock clock;
+                private final RegistrationFactory factory;
+
+                @Inject
+                CourseRegistrar(Database db, Clock clock, RegistrationFactory factory) {
+                    this.db = db;
+                    this.clock = clock;
+                    this.factory = factory;
+                }
+
+                boolean registerStudentForCourse(Student s, int courseId) {
+                    Course c = db.getCourse(courseId);
+                    if (clock.instant().isAfter(c.getRegistrationDeadline())) return false;
+                    if (!s.getPassedCourses().containsAll(c.getPrereqs())) return false;
+                    db.createRegistration(factory.create(courseId, s.getId()));
+                    return true;
+                }
+            }
+            ```
+    
+    * How DI Injects Objects
+
+        * The DI framework will attempt to instantiate any object that's injected. The **DI framework will fail at runtime if it doesn't know how to create the injected object**. DI frameworks use **modules** to configure which classes or objects should be used when an interface is injected.
+
+        * **Indirect Dependencies**
+            * DI also takes care of indirect, or transitive, dependencies. If you `@Inject` a class, and that class also has a constructor marked with `@Inject`, the DI framework will try to inject all the constructor dependencies, and all those dependencies' dependencies, and so on.
+
+        * Using DI to Create Singletons
+            * DI frameworks can usually be configured to return a specific instance of an object whenever it's injected. Any time that object is requested by an `@Inject` annotation, the DI framework will supply the exact same instance, making it effectively a singleton.
+
+* Example:
+    * ```java
+        import javax.inject.Inject;
+        import java.io.IOException;
+        import java.nio.file.Path;
+        import java.time.Clock;
+        import java.time.Duration;
+        import java.time.Instant;
+        import java.util.List;
+        import java.util.stream.Collectors;
+
+        public final class ExpirationChecker {
+
+            private final Clock clock;
+            private final MetadataFetcher metadataFetcher;
+
+            @Inject
+            ExpirationChecker(Clock clock, MetadataFetcher metadataFetcher) {
+                this.clock = clock;
+                this.metadataFetcher = metadataFetcher;
+            }
+
+            public List<Path> getExpiredFiles(List<Path> paths, Duration expiration) {
+                return paths.stream()
+                    .filter((path) -> isExpired(path, expiration))
+                    .collect(Collectors.toList());
+            }
+
+            private boolean isExpired(Path path, Duration expiration) {
+                Instant now = clock.instant();
+                try {
+                    Instant modifiedTime = metadataFetcher.getLastModifiedTime(path);
+                    return now.isAfter(modifiedTime.plus(expiration));
+                } catch (IOException e) {
+                    return false;
+                }
+            }
+        }
+        ```
+    
+    * ```java
+        import com.google.inject.AbstractModule;
+
+        import java.time.Clock;
+
+        public final class ExpirationCheckerModule extends AbstractModule {
+            @Override
+            protected void configure() {
+                bind(MetadataFetcher.class).to(MetadataFetcherImpl.class);
+                bind(Clock.class).toInstance(Clock.systemUTC());
+            }
+        }
+        ```
+    
+    * ```java
+        import java.nio.file.Path;
+        import java.time.Duration;
+        import java.time.Instant;
+        import java.util.HashMap;
+        import java.util.List;
+        import java.util.Map;
+
+        public final class ExpirationCheckerTest {
+            public static void main(String[] args) {
+
+                FakeClock fakeClock = new FakeClock();
+                Map<Path, Instant> fakeModifiedTimes = new HashMap<>();
+                FakeMetadataFetcher fakeMetadataFetcher = new FakeMetadataFetcher(fakeModifiedTimes);
+
+                Injector injector = Guice.createInjector(
+                    b -> b.bind(Clock.class).toInstance(fakeClock),
+                    b -> b.bind(MetadataFetcher.class).toInstance(fakeMetadataFetcher));
+                ExpirationChecker checker = injector.getInstance(ExpirationChecker.class);
+
+                Path expired = Path.of("/test/expired");
+                Path notExpired = Path.of("/test/not-expired");
+                fakeModifiedTimes.put(expired, fakeClock.instant().minus(Duration.ofDays(31)));
+                fakeModifiedTimes.put(notExpired, fakeClock.instant().minus(Duration.ofDays(27)));
+
+                List<Path> expiredFiles =
+                    checker.getExpiredFiles(List.of(expired, notExpired), Duration.ofDays(30));
+
+                assert expiredFiles.equals(List.of(expired));
+            }
+        }
+        ```
+    
+    * ```java
+        import com.google.inject.Guice;
+        import com.google.inject.Injector;
+
+        import java.nio.file.Path;
+        import java.time.Duration;
+        import java.util.Arrays;
+        import java.util.List;
+        import java.util.stream.Collectors;
+
+        public final class Main {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new ExpirationCheckerModule());
+                ExpirationChecker checker = injector.getInstance(ExpirationChecker.class);
+
+                List<Path> paths = Arrays.stream(args).map(Path::of).collect(Collectors.toList());
+
+                System.out.println("The following files are expired: "
+                    + checker.getExpiredFiles(paths, Duration.ofDays(28)));
+            }
+        }
+        ```
+    
+    * ![dependency_injection](./images/depedency_injection.png) 
