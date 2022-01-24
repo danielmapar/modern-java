@@ -3303,3 +3303,125 @@
 ### Introduction to Concurrent Programming
 
 * Sequential vs Concurrent vs Parallel
+
+* The difference between these kinds of programs lies in how and when the program works on tasks. A task in this context is any unit of work, such as processing a user request.
+
+    * Sequential programs can only work on one task at a time.
+    * Concurrent programs can have multiple tasks in progress at the same time.
+    * Parallel programs can actively be working on multiple tasks at the same time.
+
+* What are Threads?
+
+    * Threads are a way for programs to execute multiple tasks in parallel, at the same time.
+
+    * You can think of threads as mini programs running within the program. Each thread independently executes its own Java code, which can include variables, for-loops, conditionals, method calls, etc. Anything you can run in a non-parallel Java program, you can also run in parallel, on a thread.
+
+    * Threads require hardware and operating system support. In order to write programs that run multiple threads in parallel, the program must be running on a computer with a multi-thread CPU, and the operating system needs to have the required drivers.
+
+    * Common Uses of Threads
+
+        * Doing multiple tasks, such as handling multiple user requests, at the same time.
+
+        * Perform long-running background work, such as downloading a large file. Doing this in a separate thread allows the main thread to continue doing other things while it waits for the background thread to finish.
+
+* Threads and Program Memory
+
+    * When a program uses multiple threads, each thread has its own separate call stack:
+
+    * ![threads](./images/threads.png)
+
+    * The call stack is how each thread is able to execute its own code, allocate variables, and call methods independently of the other threads.
+
+    * However, all threads share the same heap. This means you can have two or more threads accessing shared state, such as an `ArrayList` or a `HashMap`.
+
+    * Just like any program, if the call stack grows too large (such as from infinite recursion), the thread will crash.
+
+    * If you truly need larger thread stacks, there are options you can give to the java command that will make the JVM allocate bigger thread stacks. One such option is `-XX:ThreadStackSize`.
+
+* Creating and Running Threads
+
+    * Java provides the `Thread` class to directly create and run threads:
+
+    * ```java
+        Thread thread = new Thread(() -> System.out.print("world!"));
+        System.out.print("Hello, ");
+        thread.start();
+        thread.join();
+        ```
+
+* Virtual Threads
+    * When you create a `Thread` object in Java, you're actually creating a virtual thread that's managed by the JVM. Virtual threads make it so that your program could create `10,000 Threads`, even if your computer's `CPU` only supports `4 threads`.
+
+    * Virtual threads can create the illusion of having multiple threads, but your program will still not be able to achieve parallelism unless computer the program is running on supports "real" threads managed by the operating system.
+
+* ```java
+        import java.util.ArrayList;
+        import java.util.List;
+
+        public final class IntPrinter {
+            public static void main(String[] args) throws Exception {
+                if (args.length != 1) {
+                    System.out.println("Usage: Main <number of threads>");
+                    return;
+                }
+
+                int n = Integer.parseInt(args[0]);
+                List<Thread> threads = new ArrayList<>(n);
+                for (int i = 0; i < n; i++) {
+                    threads.add(new Thread(new IntRunner(i)));
+                }
+
+                for (Thread thread : threads) {
+                    thread.start();
+                }
+
+                for (Thread thread : threads) {
+                    thread.join();
+                }
+            }
+
+            private static final class IntRunner implements Runnable {
+
+                private final int value;
+
+                IntRunner(int value) {
+                    this.value = value;
+                }
+
+                @Override
+                public void run() {
+                    System.out.println("Thread #" + Thread.currentThread().getId() + " printed " + value);
+                }
+            }
+        }
+    ```
+
+* Thread Execution Order
+
+    * You probably noticed in the exercise that when you have a bunch of threads running at the same time, they execute in seemingly random order. That's because threads are run by the operating system's thread scheduler.
+
+    * There are ways you can try to nudge the scheduler one way or another, but ultimately, your program cannot diectly control it. That's why, if multiple threads are running at the same time, they could run in any order.
+
+* What is a Race Condition?
+
+    * A race condition is a kind of software bug that happens when the correctness of a program depends on a particular execution order of parallel threads.
+
+    * As you saw in the exercise solution video, a common pitfall of using the `Thread` class directly is that calling the `run()` method **doesn't actually start the thread in parallel, it runs it synchronously.**
+
+    * Since all the threads call `run()` in order, `abc` will print in the order that the `run()` methods were called. **If you want to run a thread in parallel, the correct method to call is ** `start()`.
+
+* Theoretical Limits of Parallelism
+
+    * Parallelism can enable your programs to do more work in less time, but you can't just keep adding more threads to the program an expect it to keep getting faster.
+
+    * Your program can only benefit from parallelism to the extent that its tasks are parallelizable.
+
+* Amdahl's Law
+
+    * In 1967, a computer scientist named Gene Amdahl came up with an equation to represent this relationship:
+
+    * ![equation](./images/equation.png) 
+
+    * `p` is the fraction of the program that can be parallelized.
+    
+    * `S` is how much the program could, in theory, speed up from parallelism.
