@@ -3421,7 +3421,819 @@
     * In 1967, a computer scientist named Gene Amdahl came up with an equation to represent this relationship:
 
     * ![equation](./images/equation.png) 
+        * `p` is the fraction of the program that can be parallelized.
+        * `S` is how much the program could, in theory, speed up from parallelism.
 
-    * `p` is the fraction of the program that can be parallelized.
+* Thread Pools and Executors
+
+    * A `thread pool` is a collection of threads that is used to efficiently execute and manage asynchronous work.
+
+    * ![thread_pool](./images/thread_pool.png)
+
+    * Thread pools reduce the cost of using threads by storing them in a `worker thread pool`. That way, your program can `reuse existing threads` instead of creating a new thread for each piece of work that needs to be done.
+
+    * New work is added to a `work queue`, where it waits for a pooled thread to become available. When a thread is available, it will remove work from the queue, and do the work.
+
+* Benefits of Thread Pools
+
+    * Thread pools have several advantages over creating and using `Thread` objects directly:
+
+        * `Limits the number of threads` used by the program, and prevents the number of threads from growing in an unbounded manner.
+
+        * `Reuses worker threads`, which reduces the time and memory spent creating new threads.
     
-    * `S` is how much the program could, in theory, speed up from parallelism.
+    * Threads are a limited resource, and they should be cleaned up proactively similarly to how you should close files when you are done with them.
+
+    * Since each thread uses memory for its call stack, creating too many threads could use up all the program's available memory and cause it to crash.
+
+    * Even if you don't run out of memory, there is another problematic scenario that can happen called **thrashing**. Thrashing is when the thread scheduler is constantly switching between different threads, without giving any individual thread enough time to get any actual work done, so your program screeches to a halt, without actually crashing.
+
+* Creating Thread Pools
+
+    * In Java, thread pools are created using the `Executors API`. Here are some examples:
+
+    * A thread pool with only one thread:
+
+        * `ExecutorService pool = Executors.newSingleThreadExecutor();`
+    
+    * A thread pool that reuses threads but does not limit the number of threads it can create:
+
+        * `ExecutorService pool = Executors.newCachedThreadPool();`
+    
+    * A thread pool that reuses threads and limits the number of threads to 12:
+
+        * `ExecutorService pool = Executors.newFixedThreadPool(12);`
+
+* Submitting Asynchronous Work
+
+    * Thread pools have several methods that let you submit work to be executed asynchronously:
+
+    * Submits a `Runnable` with no return value, and returns a `Future`:
+
+        * `Future<?> print = pool.submit(() -> System.out.println("foo"));`
+    
+    * Submits a `Runnable` and returns void:
+
+        * `pool.execute(() -> System.out.println("foo"));`
+    
+    * Submits a `Callable`, whose return value will be accessible via the `Future`:
+        * `Runnable` does not let us access the return value.
+        * `Future<Path> pathFuture = pool.submit(() -> downloadFile());`
+
+* Futures
+
+    * A **future** is a reference to the result of an asynchronous computation.
+
+    * Java uses the `Future` class to represent this concept.
+
+    * If the asynchronous computation is done, calling the `get()` method will return the result of the computation. If the computation is not done, calling `get()` will cause the program to stop and wait for the computation to finish.
+
+    * `Future`s are parameterized. Calling the `get()` method of a `Future<Map>` will return a `Map`. Or, if the result is a `List`, calling `get()` on a `Future<List>` will return a `List` result, and so on.
+
+
+* Joining Asynchronous Work
+
+    * You learned that calling `Future.get()` on a future returned from a thread pool will cause the program to stop and wait for the parallel thread to finish its computation. This process of waiting for asynchronous work is called `joining`. That's why the `Thread` class has a method called `join()`.
+
+    * What happens if we don't have a `Thread` or `Future` to explicitly join? Here's one solution to the problem:
+
+    * ```java
+        CountDownLatch latch = new CountDownLatch(1);
+        pool.execute(() -> {
+            System.out.println("foo");
+            latch.countDown();
+        });
+        latch.await();
+        ```
+
+    * In this code, `CountDownLatch` helps wait for the asynchronous work to complete even though we don't have a `Thread` or `Future`.
+
+* ForkJoin Pools
+
+    * What is a `ForkJoinPool`?
+
+        * `ForkJoinPool` is a specialized kind of thread pool that has the following advantages over traditional thread pools:
+
+            * It uses a technique called `work stealing` so that idle worker threads can find work to do.
+            * Its API is optimized for `asynchronous` work that **creates more work**. You might also hear this called recursive work.
+
+    * In practice, `work stealing` does not have a huge impact on performance because "traditional" thread pools do a fine job of distributing work across the worker threads. However, depending on the kind of `asynchronous` tasks your program creates, work stealing may give an extra efficiency boost.
+    
+    * ![work_stealing](./images/work_stealing.png)
+
+    * `ForkJoinTasks`
+
+        * ![forkjoin_tasks](./images/forkjoin_tasks.png)
+
+        * When you create work to submit to a `ForkJoinPool`, you usually do so by subclassing either `RecursiveTask` or `RecursiveAction`.
+
+        * Use `RecursiveTask` for asynchronous work that returns a value, and use `RecursiveAction` when the asynchronous computation does not return a value.
+
+        * The `ForkJoinPool API` is optimized for recursive work, which is work that creates other work.
+
+        * When you are implementing the `compute()` method of a `RecursiveAction` or `RecursiveTask`, you can submit more work to the thread pool by calling the `invoke()` method, or one of its many variants. Once you `invoke` the recursive work, your `RecursiveAction` or `RecursiveTask` can wait for the results and use them in its own computation, or it can proceed without joining the results.
+
+        * You can also use the "normal" thread pool methods of `submit()` and `execute()`.
+
+        * ![recursive_threads](./images/recursive_threads.png)
+
+
+    * ```java
+        import java.io.IOException;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.util.List;
+        import java.util.concurrent.RecursiveTask;
+        import java.util.stream.Collectors;
+        import java.util.stream.Stream;
+
+        public final class CountWordsTask extends RecursiveTask<Long> {
+            private final Path path;
+            private final String word;
+
+            public CountWordsTask(Path path, String word) {
+                this.path = path;
+                this.word = word;
+            }
+
+            @Override
+            protected Long compute() {
+                if (!Files.isDirectory(path)) {
+                    return WordCounter.countWordInFile(path, word);
+                }
+                Stream<Path> subpaths;
+                try {
+                    subpaths = Files.list(path);
+                } catch (IOException e) {
+                    return 0L;
+                }
+                List<CountWordsTask> subtasks =
+                    subpaths.map(path -> new CountWordsTask(path, word))
+                    .collect(Collectors.toList());
+                invokeAll(subtasks);
+                return subtasks
+                    .stream()
+                    .mapToLong(CountWordsTask::getRawResult)
+                    .sum();
+            }
+        }
+        ```
+    
+    * ```java
+        import java.io.IOException;
+        import java.nio.charset.StandardCharsets;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.time.Duration;
+        import java.time.Instant;
+        import java.util.Arrays;
+        import java.util.concurrent.ForkJoinPool;
+
+        public final class WordCounter {
+            public static void main(String[] args) {
+                if (args.length != 2) {
+                    System.out.println("Usage: WordCounter [path] [word]");
+                    return;
+                }
+                Path start = Path.of(args[0]);
+                String word = args[1];
+
+                Instant before = Instant.now();
+
+                ForkJoinPool pool = new ForkJoinPool();
+                long count = pool.invoke(new CountWordsTask(start, word));
+
+                Duration elapsed = Duration.between(before, Instant.now());
+                System.out.println(count + " (" + elapsed.toSeconds() + " seconds)");
+            }
+
+            public static long countWordInFile(Path file, String word) {
+                try {
+                    return Files.readAllLines(file, StandardCharsets.UTF_8)
+                    .stream()
+                    .flatMap(l -> Arrays.stream(l.split(" ")))
+                    .filter(word::equalsIgnoreCase)
+                    .count();
+                } catch (IOException e) {
+                    return 0;
+                }
+            }
+
+            private static long countWords(Path path, String word) {
+                if (!Files.isDirectory(path)) {
+                    return countWordInFile(path, word);
+                }
+                try {
+                    return Files.list(path)
+                    .mapToLong(p -> countWords(p, word))
+                    .sum();
+                } catch (IOException e) {
+                    return 0;
+                }
+            }
+        }
+        ```
+
+* Parallel Streams
+
+    * `Parallel streams` are a way to execute stream `pipelines in parallel`, on `multiple threads`.
+
+    * They can often be a quick way to add parallelism to existing, sequential stream pipeline.
+
+    * Using Parallel Streams
+
+        * You use parallel streams by calling the `parallelStream()` on a Java collection, or by calling the `parallel()` method on an existing `Stream`. Here's a **non-parallel** Stream example from the lesson on Functional Programming:
+
+        * ```java
+            Map<Year, Long> graduatingClassSizes = studentList
+                .stream()
+                .collect(Collectors.groupingBy(
+                    Student::getGraduationYear, Collectors.counting());
+            ```
+
+        * Here is a parallel version of the same `Stream`:
+
+        * ```java
+            Map<Year, Long> graduatingClassSizes = studentList
+                .parallelStream()
+                .collect(Collectors.groupingByConcurrent(
+                    Student::getGraduationYear, Collectors.counting());
+            ```
+    
+    * Notice also how a concurrent `Collector` needs to be used. Not all collectors support concurrency; if you accidentally apply such a collector to a `parallel stream`, the stream will not actually run in parallel.
+
+    * `Stream.of("a", "b", "c").parallel().forEachOrdered(System.out::print);`
+        * This program only ever prints abc because `forEachOrdered()` forces the threads to join in sequential order.
+        * This example demonstrates how making a stream parallel does not automatically mean it will reap any of the benefits of parallelism. In fact, this code probably runs a little slower than if the `parallel()` call has been left out altogether.
+
+* Using Parallel Streams with Thread Pools
+
+    * By default, parallel streams run threads in the default `ForkJoinPool.commonPool()`. You can circumvent that default by wrapping the stream computation in a `Callable` and submitting it to a `ForkJoinPool` explicitly:
+
+    * ```java
+        ForkJoinPool pool = new ForkJoinPool();
+        Future<Map<Year, Long>> graduatingClassSizes = pool.submit(() ->
+            studentList.parallelStream()
+            .collect(Collectors.groupingByConcurrent(
+                Student::getGraduationYear, Collectors.counting()));
+        ```
+    
+    * This can come in handy if you want finer control over the parallelism, or if you want to separate your parallel stream conputations into different thread pools.
+
+    * ```java
+        import java.time.LocalDate;
+        import java.time.Year;
+        import java.time.ZoneId;
+        import java.util.Comparator;
+        import java.util.List;
+        import java.util.Map;
+        import java.util.concurrent.Callable;
+        import java.util.concurrent.ForkJoinPool;
+        import java.util.concurrent.Future;
+        import java.util.stream.Collectors;
+
+        public final class SummarizeClients {
+            public static void main(String[] args) throws Exception {
+
+                List<UdacisearchClient> clients = ClientStore.getClients();
+                int numClients = clients.size();
+
+                ForkJoinPool pool = new ForkJoinPool();
+
+                Future<Integer> totalQuarterlySpend =
+                    pool.submit(() ->
+                        clients
+                            .parallelStream()
+                            .mapToInt(UdacisearchClient::getQuarterlyBudget)
+                            .sum());
+
+                Future<Double> averageBudget =
+                    pool.submit(() ->
+                        clients
+                            .parallelStream()
+                            .mapToDouble(UdacisearchClient::getQuarterlyBudget)
+                            .average()
+                            .orElse(0));
+
+                Future<Long> nextExpiration =
+                    pool.submit(() ->
+                        clients
+                            .parallelStream()
+                            .min(Comparator.comparing(UdacisearchClient::getContractEnd))
+                            .map(UdacisearchClient::getId)
+                            .orElse(-1L));
+
+                Future<List<ZoneId>> representedZoneIds =
+                    pool.submit(() ->
+                        clients
+                            .parallelStream()
+                            .flatMap(c -> c.getTimeZones().stream())
+                            .distinct()  // Or use Collectors.toSet()
+                            .collect(Collectors.toList()));
+
+                Future<Map<Year, Long>> contractsPerYear =
+                    pool.submit(() ->
+                        clients
+                            .parallelStream()
+                            .collect(
+                                Collectors.groupingByConcurrent(
+                                    SummarizeClients::getContractYear, Collectors.counting())));
+
+                pool.shutdown();
+
+                System.out.println("Num clients: " + numClients);
+                System.out.println("Total quarterly spend: " + totalQuarterlySpend.get());
+                System.out.println("Average budget: " + averageBudget.get());
+                System.out.println("ID of next expiring contract: " + nextExpiration.get());
+                System.out.println("Client time zones: " + representedZoneIds.get());
+                System.out.println("Contracts per year: " + contractsPerYear.get());
+            }
+
+            private static Year getContractYear(UdacisearchClient client) {
+                LocalDate contractDate =
+                    LocalDate.ofInstant(client.getContractStart(), client.getTimeZones().get(0));
+                return Year.of(contractDate.getYear());
+            }
+        }
+        ```
+
+* Synchronization
+
+    * As you saw in a previous section, it's possible for multiple threads to access **shared state**, such as a `List` or `Map` stored in the heap. **It's also possible multiple threads could be accessing a shared resource, such as a file.**
+
+    * In the context of `multi-threaded` programming, **synchronization** is the process of limiting the number of threads that can access a shared resource at the same time.
+
+    * Synchronization is actually a more general concept that covers more than just threads. For example you can limit concurrent access of **multiple processes**, or programs, to a file. In this lesson we will only be talking about threads.
+
+    * When is Synchronization Needed?
+
+        * You should think about synchronization whenever you have multiple threads accessing the **same shared resource**, such as a data structure or a file.
+
+        * ![syncronized](./images/syncronized.png)
+
+        * If all the threads are **just reading the shared resource, that's usually okay without synchronization**. This is sometimes called read-only access to the shared resource.
+
+        * On the other hand, if one or both of the threads is updating, or writing to, the shared resource, synchronization may be required!
+
+
+    * Ways to Synchronize
+
+        * Java has several built-in utilities to help you synchronize multi-threaded code. Here are two examples:
+
+        * Synchronized collection wrappers:
+
+        * `Map<String, Integer> votes = Collections.synchronizedMap(new HashMap<>());`
+
+        * Data structures and tools in the `java.util.concurrent` package that are specifically designed for concurrent access:
+
+        * Map<String, Integer> votes = new ConcurrentHashMap<>();
+
+        * ![syncronized_1](./images/syncronized_1.png)
+
+        * ![syncronized_2](./images/syncronized_2.png)
+
+    * For example, consider when two threads try to add entries to the map at the same time. Under the right circumstances `ConcurrentHashMap` may determine that the writes are `non-conflicting`, and will allow them both to happen at the same time. With `Collections.synchronizedMap()` only **one thread at a time is allowed to access the map**, no matter how those threads are using the map.
+
+* Single-Threaded Version
+
+    * ```java
+        import java.util.*;
+        import java.util.concurrent.*;
+
+        public final class VotingApp {
+            public static void main(String[] args) throws Exception {
+
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+
+                Map<String, Integer> votes = new HashMap<>();
+
+                List<Future<?>> futures = new ArrayList<>(10_000);
+                for (int i = 0; i < 10_000; i++) {
+                    futures.add(
+                        executor.submit(() -> {
+                            votes.compute("Larry", (k, v) -> (v == null) ? 1 : v + 1);
+                        }));
+                }
+                for (Future<?> future : futures) {
+                    future.get();
+                }
+                executor.shutdown();
+
+                System.out.println(votes);
+            }
+        }
+        ```
+
+* Multi-Threaded Version Using `ConcurrentHashMap`
+
+    * ```java
+        import java.util.*;
+        import java.util.concurrent.*;
+
+        public final class VotingApp {
+            public static void main(String[] args) throws Exception {
+
+                ExecutorService executor = Executors.newFixedThreadPool(12);
+
+                Map<String, Integer> votes = new ConcurrentHashMap<>();
+
+                List<Future<?>> futures = new ArrayList<>(10_000);
+                for (int i = 0; i < 10_000; i++) {
+                futures.add(
+                    executor.submit(() -> {
+                        votes.compute("Larry", (k, v) -> (v == null) ? 1 : v + 1);
+                    }));
+                }
+                for (Future<?> future : futures) {
+                future.get();
+                }
+                executor.shutdown();
+
+                System.out.println(votes);
+            }
+        }
+        ```
+
+* What are Atomic Operations?
+    * An **atomic operation** is an operation that is executed as a `single step`, and cannot be split into smaller steps.
+
+    * Atomicity is a really important concept in concurrent programming. If an operation is atomic, that means we don't have to worry about synchronizing it across different threads.
+
+    * In the demo, you saw how `ConcurrentHashMap.compute()` is an atomic operation, but individually calling `ConcurrentHashMap.get()` and `ConcurrentHashMap.put()` is not atomic.
+
+
+* Immutable Objects
+
+    * An **immutable object** is an object whose value cannot change after it is created.
+
+    * The term "immutable" has the same base as the word "mutate". If an object is `IM-mutable`, that means it cannot be mutated.
+
+    * Mutable Objects
+
+        * Unsafe to use as hash keys.
+        * If used from multiple threads, must be explicitly synchronized.
+        * Harder to reason about in code.
+
+    * Immutable Objects
+        * Can be safely used as keys in hash-based data structures, like `HashMap`.
+        * Inherently thread-safe.
+        * Easier to reason about in code.
+
+* The `synchronized` Keyword
+
+    * The best way to synchronize is to use high-level built-in tools like the synchronized `Collections` wrappers, or data structures in the `java.util.concurrent` package.
+
+    * When those options aren't available, you can use the `synchronized` keyword for low-level synchronization control.
+
+    * ```java
+        public final class VotingApp {
+            private final Map<String, Integer> votes = new HashMap<>();
+
+            public void castVote(String performer) {
+                synchronized (this) {
+                    Integer count = votes.get(performer);
+                    if (count == null) {
+                        votes.put(performer, 1);
+                    } else {
+                        votes.put(performer, count + 1);
+                    }
+                }
+            }
+        }
+        ```
+    
+    * The thing in parentheses after the `synchronized` keyword is the `lock object`. When a thread enters the code block, it takes ownership of the `lock`. Only one thread at a time can own the lock at a time, so only one thread is allowed to be executing code inside the `synchronized` block at a given time.
+
+    * Lock Objects
+
+        * Any object can be used as the lock. For example, you could use the `votes` map as the lock object:
+
+        * ```java
+            public void castVote(String performer) {
+                synchronized (votes) {
+                ...
+                }
+            }
+            }
+            ```
+        
+        * Or, you could create a completely new object just to serve the purpose of the lock:
+
+        * ```java
+            private final Object lock = "SpecialLock";
+                public void castVote(String performer) {
+                    synchronized (lock) {
+                    ...
+                    }
+                }
+            }
+            ```
+        * If you decide to use the `this` keyword, the lock object is the current instance of the class. If you're using `this` to lock the entire method, you can use this trick instead:
+
+        * ```java
+            public final class VotingApp {
+                private final Map<String, Integer> votes = new HashMap<>();
+
+                public synchronized void castVote(String performer) {
+                    Integer count = votes.get(performer);
+                    if (count == null) {
+                        votes.put(performer, 1);
+                    } else {
+                        votes.put(performer, count + 1);
+                    }
+                }
+            }
+            ```
+    * Example:
+    
+    * ```java
+        import java.util.Objects;
+
+        public final class Database {
+            private static Database database;
+
+            private Database() {}
+
+            public static Database getInstance() {
+                if (database == null) {
+                    synchronized (Database.class) {
+                        if (database == null) {
+                            database = new Database();
+                            database.connect("/usr/local/data/users.db");
+                        }
+                    }
+                }
+                return database;
+            }
+
+            // Connects to the remote database.
+            private void connect(String url) {
+                Objects.requireNonNull(url);
+            }
+
+            public static void main(String[] args) {
+                Database a = Database.getInstance();
+                Database b = Database.getInstance();
+
+                System.out.println(a == b);
+            }
+        }
+        ```
+
+* Advanced Synchronization
+
+    * When to Use the `ReentrantLock` Class
+
+        * The `synchronized` keyword only works with blocks of code — either explicit curly braces after the lock object, or an entire method.
+
+        * Sometimes, you may want to take ownership of the `lock` in one method, and release ownership of the `lock` in another method. Doing this is impossible using only the `synchronized` keyword.
+
+        * For these kinds of situations, Java provides the `ReentrantLock` class.
+
+        * Here's a code example using `ReentrantLock`:
+
+        * ```java
+            public final class VotingApp {
+                private final Map<String, Integer> votes = new HashMap<>();|
+                private final Lock lock = new ReentrantLock();
+                public void castVote(String performer) {
+                    lock.lock();
+                    try {
+                        votes.compute(
+                        performer, (k, v) -> (v == null) ? 1 : v + 1);
+                    } finally {
+                        lock.unlock();
+                    }
+                }
+            }
+            ```
+
+        * The key feature here is that the `lock()` and `unlock()` methods can be called anywhere, by any thread that has a reference to the lock object.
+
+        * You could for example, have a data structure like a `HashMap` that stores `ReentrantLocks` as values. **Maybe the keys are file names, or some other resource that is shared between threads**.
+
+* What is a Deadlock?
+
+    * A `deadlock` is a kind of concurrent programming error that happens when all threads are stuck waiting for some action. But that action never happens, meaning no threads are ever able to make progress.
+
+    * One common source of deadlocks is when a thread takes ownership of a `lock`, but never releases it. This can happen when two threads need the same locks, but take ownership of them in a different order.
+
+* Other Kinds of Locks
+
+    * `ReentrantLock` is just one kind of lock object.
+
+    * If you have a moment, take a look in the `java.util.concurrent.locks` package, which contains other kinds of specialized locks.
+
+    * It contains other kinds of specialty locks, such as `ReadWriteLock`. This can be useful when you have some threads that only need to read a shared resource, but other threads need to modify the resource.
+
+* Semamphores
+    
+    * The `synchronized` keyword only allows one thread at a time within a guarded block of code. What do you do if you need to allow more than one thread?
+
+    * The `Semaphore` class can help with this scenario.
+
+    * To create a `Semaphore` you tell it how many **permits** it can give out:
+
+    * ```java
+        Semaphore semaphore = new Semaphore(4);
+        ```
+    
+    * Usually the number passed to the `Semaphore` constructor is the number of threads you want to allow in the guarded code, but you could also have a thread taking multiple permits if you want.
+
+    * Here's how threads obtain and release permits from the semaphore:
+
+    * ```java
+        try {
+            semaphore.acquire();
+            // Up to 4 threads can be executing here in parallel!
+            // ...
+        } finally {
+            // Give another thread a turn.
+            semaphore.release();
+        }
+        ```
+
+    * You might have noticed that if you create a Semaphore with only 1 permit to give out, it behaves the same as a `ReentrantLock`.
+
+    * When a lock only allows one thread, you will sometimes here it called a mutex, which is a portmanteau of the term "mutual exclusion".
+
+* Test Runner
+    * ```java
+        import java.lang.reflect.Method;
+        import java.net.URL;
+        import java.net.URLClassLoader;
+        import java.nio.file.Path;
+        import java.time.Duration;
+        import java.time.Instant;
+        import java.util.ArrayList;
+        import java.util.List;
+        import java.util.concurrent.CountDownLatch;
+        import java.util.concurrent.Executor;
+        import java.util.concurrent.ExecutorService;
+        import java.util.concurrent.Executors;
+
+        public final class TestRunner {
+            public static void main(String[] args) throws Exception {
+                if (args.length != 2) {
+                    System.out.println("Usage: TestRunner [test folder] [test name]");
+                    return;
+                }
+                Instant programStart = Instant.now();
+                List<Method> testMethods = new ArrayList<>();
+                Class<?> testClass = getTestClass(args[0], args[1]);
+                for (Method method : testClass.getDeclaredMethods()) {
+                    Test annotation = method.getAnnotation(Test.class);
+                    if (annotation != null) {
+                        testMethods.add(method);
+                    }
+                }
+
+                Object passedLock = new Object();
+                List<String> passed = new ArrayList<>();
+                Object failedLock = new Object();
+                List<String> failed = new ArrayList<>();
+
+                CountDownLatch latch = new CountDownLatch(testMethods.size());
+
+                ExecutorService executor = Executors.newFixedThreadPool(4);
+                for (Method method : testMethods) {
+                    executor.execute(() -> {
+                        try {
+                            UnitTest test = (UnitTest) testClass.getConstructor().newInstance();
+                            test.beforeEachTest();
+                            method.invoke(test);
+                            test.afterEachTest();
+                            synchronized (passedLock) {
+                                passed.add(getTestName(testClass, method));
+                            }
+                        } catch (Throwable throwable) {
+                        synchronized (failedLock) {
+                            failed.add(getTestName(testClass, method));
+                        }
+                        } finally {
+                        latch.countDown();
+                        }
+                    });
+                }
+                executor.shutdown();
+                latch.await();
+                Duration executionTime =
+                    Duration.between(programStart, Instant.now());
+
+                System.out.println("Passed tests: " + passed);
+                System.out.println("FAILED tests: " + failed);
+                System.out.println("Test execution took " + executionTime.toSeconds() + " second(s).");
+            }
+
+            private static Class<?> getTestClass(String testFolder, String className) throws Exception {
+                URL testDir = Path.of(testFolder).toUri().toURL();
+                URLClassLoader loader = new URLClassLoader(new URL[]{testDir});
+                Class<?> klass = Class.forName(className, true, loader);
+                if (!UnitTest.class.isAssignableFrom(klass)) {
+                throw new IllegalArgumentException("Class " + klass.toString() + " must implement UnitTest");
+                }
+                return klass;
+            }
+
+            private static String getTestName(Class<?> klass, Method method) {
+                return klass.getName() + "#" + method.getName();
+            }
+        }
+        ```
+
+* Solution Without Synchronized Lists or CountDownLatch
+
+    * ```java
+        import java.lang.reflect.Method;
+        import java.net.URL;
+        import java.net.URLClassLoader;
+        import java.nio.file.Path;
+        import java.time.Duration;
+        import java.time.Instant;
+        import java.util.ArrayList;
+        import java.util.List;
+        import java.util.concurrent.CountDownLatch;
+        import java.util.concurrent.Executor;
+        import java.util.concurrent.ExecutorService;
+        import java.util.concurrent.Executors;
+        import java.util.concurrent.Future;
+
+        public final class TestRunner {
+
+            private static final class Result {
+                private final String testName;
+                private final boolean passed;
+                Result(String testName, boolean passed) {
+                    this.testName = testName;
+                    this.passed = passed;
+                }
+            }
+
+            public static void main(String[] args) throws Exception {
+                if (args.length != 2) {
+                    System.out.println("Usage: TestRunner [test folder] [test name]");
+                    return;
+                }
+                Instant programStart = Instant.now();
+
+                List<Method> testMethods = new ArrayList<>();
+                Class<?> testClass = getTestClass(args[0], args[1]);
+                for (Method method : testClass.getDeclaredMethods()) {
+                    Test annotation = method.getAnnotation(Test.class);
+                    if (annotation != null) {
+                        testMethods.add(method);
+                    }
+                }
+
+                ExecutorService executor = Executors.newFixedThreadPool(4);
+                List<Future<Result>> results = new ArrayList<>(testMethods.size());
+                for (Method method : testMethods) {
+                    Future<Result> result = executor.submit(() -> {
+                        try {
+                            UnitTest test = (UnitTest) testClass.getConstructor().newInstance();
+                            test.beforeEachTest();
+                            method.invoke(test);
+                            test.afterEachTest();
+                            return new Result(getTestName(testClass, method), true);
+                        } catch (Throwable throwable) {
+                            return new Result(getTestName(testClass, method), false);
+                        }
+                    });
+                    results.add(result);
+                }
+
+                List<String> passed = new ArrayList<>();
+                List<String> failed = new ArrayList<>();
+                for (Future<Result> resultFuture : results) {
+                    Result result = resultFuture.get();
+                    if (result.passed) {
+                        passed.add(result.testName);
+                    } else {
+                        failed.add(result.testName);
+                    }
+                }
+                executor.shutdown();
+
+                Duration executionTime =
+                    Duration.between(programStart, Instant.now());
+
+                System.out.println("Passed tests: " + passed);
+                System.out.println("FAILED tests: " + failed);
+                System.out.println("Test execution took " + executionTime.toSeconds() + " second(s).");
+            }
+
+            private static Class<?> getTestClass(String testFolder, String className) throws Exception {
+                URL testDir = Path.of(testFolder).toUri().toURL();
+                URLClassLoader loader = new URLClassLoader(new URL[]{testDir});
+                Class<?> klass = Class.forName(className, true, loader);
+                if (!UnitTest.class.isAssignableFrom(klass)) {
+                    throw new IllegalArgumentException("Class " + klass.toString() + " must implement UnitTest");
+                }
+                return klass;
+            }
+
+            private static String getTestName(Class<?> klass, Method method) {
+                return klass.getName() + "#" + method.getName();
+            }
+        }
+        ```
