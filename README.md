@@ -444,7 +444,7 @@
         
         * Interfaces
             * Can have class variables.
-            * Every method in an interface is abstract.
+            * Every method in an interface is abstract (in Java 7 and bellow).Java 8+ support default methods.
             * **Cannot have instance variables**. Variables in an interface must be the same for every class implementing the interface.
             * Classes can implement more than one interface and **have multiple inheritance**.
     
