@@ -654,7 +654,10 @@
 
 * Collections
 
-    * ![collections](./images/collections.png)
+    * ![collections1](./images/collections1.png)
+        * Check `code/JavaCollectionsDemo.java` for an end-to-end example
+
+    * ![collections](./images/collections.png) 
         * TreeMap is a map implementation that keeps its entries sorted according to the natural ordering of its keys or better still using a comparator if provided by the user at construction time.
 
     * Collections are a set of data structures that were introduced in Java 5.0 to solve problems with consistency between data structures and to address performance issues. They were developed with the following goals in mind:

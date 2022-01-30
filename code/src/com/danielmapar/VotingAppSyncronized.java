@@ -18,7 +18,7 @@ public final class VotingAppSyncronized {
                     }));
         }
         for (Future<?> future : futures) {
-            future.get();w
+            future.get();
         }
         executor.shutdown();
 
