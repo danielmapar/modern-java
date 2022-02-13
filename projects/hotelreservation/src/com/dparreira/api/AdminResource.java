@@ -2,6 +2,9 @@ package com.dparreira.api;
 
 import com.dparreira.model.Customer;
 import com.dparreira.model.IRoom;
+import com.dparreira.model.Reservation;
+import com.dparreira.model.Room;
+import com.dparreira.model.RoomType;
 import com.dparreira.service.CustomerService;
 import com.dparreira.service.ReservationService;
 import java.util.Collection;
@@ -28,6 +31,15 @@ public class AdminResource {
       reservationService.addRoom(room);
     }
   }
+
+  public void addRoom(String roomNumber, Double price, RoomType roomType) {
+    ReservationService.getInstance().addRoom(new Room(roomNumber, price, roomType));
+  }
+
+  public Collection<Reservation> getAllReservations() {
+    return ReservationService.getInstance().getAllReservations();
+  }
+
 
   public Collection<IRoom> getAllRooms() {
     return ReservationService.getInstance().getAllRooms();

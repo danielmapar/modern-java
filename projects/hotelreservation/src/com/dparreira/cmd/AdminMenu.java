@@ -1,13 +1,10 @@
 package com.dparreira.cmd;
 
+import com.dparreira.api.AdminResource;
 import com.dparreira.model.Customer;
-import com.dparreira.model.FreeRoom;
 import com.dparreira.model.IRoom;
 import com.dparreira.model.Reservation;
-import com.dparreira.model.Room;
 import com.dparreira.model.RoomType;
-import com.dparreira.service.CustomerService;
-import com.dparreira.service.ReservationService;
 import java.util.Collection;
 import java.util.Scanner;
 
@@ -44,7 +41,7 @@ public class AdminMenu implements IMenu {
   }
 
   public static void printAllCustomers() {
-    Collection<Customer> customers = CustomerService.getInstance().getAllCustomers();
+    Collection<Customer> customers = AdminResource.getInstance().getAllCustomers();
 
     for (Customer customer : customers) {
       System.out.println(customer);
@@ -52,7 +49,7 @@ public class AdminMenu implements IMenu {
   }
 
   public static void printAllRooms() {
-    Collection<IRoom> rooms = ReservationService.getInstance().getAllRooms();
+    Collection<IRoom> rooms = AdminResource.getInstance().getAllRooms();
 
     for (IRoom room : rooms) {
       System.out.println(room);
@@ -60,10 +57,11 @@ public class AdminMenu implements IMenu {
   }
 
   public static void printAllReservations() {
-    Collection<Reservation> reservations = ReservationService.getInstance().getAllReservations();
+    Collection<Reservation> reservations = AdminResource.getInstance().getAllReservations();
 
     for (Reservation reservation : reservations) {
       System.out.println(reservation);
+      System.out.println("-----------");
     }
   }
 
@@ -105,7 +103,7 @@ public class AdminMenu implements IMenu {
       break;
     } while(true);
 
-    ReservationService.getInstance().addRoom(new Room(roomNumber, price, roomType));
+    AdminResource.getInstance().addRoom(roomNumber, price, roomType);
 
     do {
       String addAnotherRoom;
@@ -147,5 +145,4 @@ public class AdminMenu implements IMenu {
     }
     printOptions();
   }
-
 }

@@ -1,10 +1,9 @@
 package com.dparreira.cmd;
 
+import com.dparreira.api.HotelResource;
 import com.dparreira.model.Customer;
 import com.dparreira.model.IRoom;
 import com.dparreira.model.Reservation;
-import com.dparreira.service.CustomerService;
-import com.dparreira.service.ReservationService;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
@@ -51,7 +50,7 @@ public class MainMenu {
     do {
       System.out.println("Please enter a customer email");
       String email = getInput();
-      Customer customer = CustomerService.getInstance().getCustomer(email);
+      Customer customer = HotelResource.getInstance().getCustomer(email);
 
       if (customer == null) {
         System.out.println("Customer email not found, try again!");
@@ -64,8 +63,8 @@ public class MainMenu {
 
   public static void reserveARoom() {
 
-    Date checkInDate = null;
-    Date checkOutDate = null;
+    Date checkInDate;
+    Date checkOutDate;
 
     Date currentDate = new Date(System.currentTimeMillis());
     Date nextYearDate = currentDate;
@@ -103,7 +102,7 @@ public class MainMenu {
       break;
     } while(true);
 
-    Collection<IRoom> availableRooms = ReservationService.getInstance().findRooms(checkInDate, checkOutDate);
+    Collection<IRoom> availableRooms = HotelResource.getInstance().findARoom(checkInDate, checkOutDate);
 
     if (availableRooms.size() > 0) {
       for (IRoom room : availableRooms) {
@@ -148,7 +147,7 @@ public class MainMenu {
       String roomNumber;
       System.out.println("What room number would you like to reserve?");
       roomNumber = getInput();
-      room = ReservationService.getInstance().getARoom(roomNumber);
+      room = HotelResource.getInstance().getRoom(roomNumber);
       if (room == null) {
         System.out.println("Room not found. try again!");
         continue;
@@ -157,7 +156,7 @@ public class MainMenu {
     } while(true);
 
     try {
-      Reservation reservation = ReservationService.getInstance().reserveARoom(customer, room, checkInDate, checkOutDate);
+      Reservation reservation = HotelResource.getInstance().bookARoom(customer.getEmail(), room, checkInDate, checkOutDate);
       System.out.println(reservation);
     } catch (Exception e) {
       System.out.println("Room not available at this date, try again!");
@@ -168,7 +167,7 @@ public class MainMenu {
   public static void findCustomerReservations() {
     Customer customer = findACustomer();
 
-    Collection<Reservation> reservationList = ReservationService.getInstance().getCustomerReservation(customer);
+    Collection<Reservation> reservationList = HotelResource.getInstance().getCustomersReservations(customer.getEmail());
 
     for (Reservation reservation : reservationList) {
       System.out.println(reservation);
@@ -198,7 +197,7 @@ public class MainMenu {
       }
 
       try {
-        CustomerService.getInstance().addCustomer(email, firstName, lastName);
+        HotelResource.getInstance().createACustomer(email, firstName, lastName);
       } catch (IllegalArgumentException e) {
         System.out.println("Invalid email, try again!");
         continue;
