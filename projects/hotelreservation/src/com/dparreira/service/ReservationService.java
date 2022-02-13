@@ -43,11 +43,8 @@ public class ReservationService {
 
   public Reservation reserveARoom(Customer customer, IRoom room, Date checkInDate, Date checkOutDate)
       throws Exception {
-    List<IRoom> roomsNotAvailable = (ArrayList<IRoom>) findRooms(checkInDate, checkOutDate);
-
-    for (IRoom roomNotAvailable : roomsNotAvailable) {
-      if (roomNotAvailable.equals(room)) throw new Exception("Room already reserved!");
-    }
+    Collection<IRoom> availableRooms = findRooms(checkInDate, checkOutDate);
+    if (!availableRooms.contains(room)) throw new Exception("Room not available!");
 
     Reservation reservation = new Reservation(customer, room, checkInDate, checkOutDate);
     reservations.add(reservation);
@@ -55,14 +52,18 @@ public class ReservationService {
   }
 
   public Collection<IRoom> findRooms(Date checkInDate, Date checkOutDate) {
-    List<IRoom> roomList = new ArrayList<>();
+    Collection<IRoom> reservedRoomList = new ArrayList<>();
     for (Reservation reservation : reservations) {
-      if (reservation.getCheckInDate().getTime() >= checkInDate.getTime() &&
-          reservation.getCheckOutDate().getTime() <= checkOutDate.getTime()) {
-        roomList.add(reservation.getRoom());
+      if ((checkInDate.getTime() >= reservation.getCheckInDate().getTime() && checkInDate.getTime() <= reservation.getCheckOutDate().getTime()) ||
+          (checkOutDate.getTime() <= reservation.getCheckOutDate().getTime() && checkOutDate.getTime() >= reservation.getCheckInDate().getTime())) {
+        reservedRoomList.add(reservation.getRoom());
       }
     }
-    return roomList;
+
+    Collection<IRoom> availableRooms = roomMap.values();
+    availableRooms.removeAll(reservedRoomList);
+
+    return availableRooms;
   }
 
   public Collection<Reservation> getCustomerReservation(Customer customer) {
@@ -72,7 +73,7 @@ public class ReservationService {
     ).collect(Collectors.toCollection(ArrayList::new));
   }
 
-  public void printAllReservations() {
-    System.out.print(reservations);
+  public Collection<Reservation> getAllReservations() {
+    return reservations;
   }
 }

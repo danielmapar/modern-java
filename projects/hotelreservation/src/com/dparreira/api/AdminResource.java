@@ -37,7 +37,4 @@ public class AdminResource {
     return CustomerService.getInstance().getAllCustomers();
   }
 
-  public void displayAllReservations() {
-    ReservationService.getInstance().printAllReservations();
-  }
 }

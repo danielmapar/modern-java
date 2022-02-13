@@ -1,6 +1,6 @@
 package com.dparreira.model;
 
-enum RoomType {
+public enum RoomType {
   SINGLE,
   DOUBLE
 }

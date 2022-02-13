@@ -23,11 +23,11 @@ public class Customer {
     this.email = email;
   }
 
+  public String getFullName() {
+    return firstName + " " + lastName;
+  }
+
   @Override public String toString() {
-    return "Customer{" +
-        "firstName='" + firstName + '\'' +
-        ", lastName='" + lastName + '\'' +
-        ", email='" + email + '\'' +
-        '}';
+    return "First Name: " + firstName + " Last Name: " + lastName + " Email: " + email;
   }
 }

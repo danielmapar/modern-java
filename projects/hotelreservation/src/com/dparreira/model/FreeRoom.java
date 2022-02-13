@@ -1,8 +1,8 @@
 package com.dparreira.model;
 
 public class FreeRoom extends Room {
-  FreeRoom() {
-    this.price = 0.0;
+  public FreeRoom(String roomNumber, RoomType type) {
+    super(roomNumber, 0.0, type);
   }
 
   @Override public String toString() {
