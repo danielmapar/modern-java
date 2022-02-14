@@ -1,12 +1,13 @@
 package com.dparreira.model;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Customer {
-  String firstName;
-  String lastName;
-  String email;
+  private final String firstName;
+  private final String lastName;
+  public String email;
 
   public static final Pattern VALID_EMAIL_ADDRESS_REGEX =
       Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
@@ -33,5 +34,18 @@ public class Customer {
 
   @Override public String toString() {
     return "First Name: " + firstName + " Last Name: " + lastName + " Email: " + email;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Customer customer = (Customer) o;
+    return Objects.equals(firstName, customer.firstName) &&
+        Objects.equals(lastName, customer.lastName) &&
+        Objects.equals(email, customer.email);
+  }
+
+  @Override public int hashCode() {
+    return Objects.hash(firstName, lastName, email);
   }
 }

@@ -109,9 +109,27 @@ public class MainMenu {
         System.out.println(room);
       }
     } else {
-      System.out.println("No available rooms for the provided dates. Try again!");
-      reserveARoom();
-      return;
+      calendar.setTime(checkInDate);
+      calendar.add(Calendar.DATE, 7);
+      checkInDate = calendar.getTime();
+
+      calendar.setTime(checkOutDate);
+      calendar.add(Calendar.DATE, 7);
+      checkOutDate = calendar.getTime();
+
+      System.out.println("No rooms were found for the specified check in / check out dates.\n" +
+          "Searching for rooms after 7 days from the original check in / check out dates...");
+
+      availableRooms = HotelResource.getInstance().findARoom(checkInDate, checkOutDate);
+
+      if (availableRooms.size() == 0) {
+        System.out.println("No available rooms found.");
+        return;
+      }
+      System.out.println("Other suggestions:");
+      for (IRoom room : availableRooms) {
+        System.out.println(room);
+      }
     }
 
     do {

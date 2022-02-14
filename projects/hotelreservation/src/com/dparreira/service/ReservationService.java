@@ -8,12 +8,11 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ReservationService {
 
-  private Map<String, IRoom> roomMap;
+  private HashMap<String, IRoom> roomMap;
   private List<Reservation> reservations;
 
   private static ReservationService instance;
@@ -28,12 +27,16 @@ public class ReservationService {
     return instance;
   }
 
+  boolean hasRoom(String roomId) {
+    return roomMap.containsKey(roomId);
+  }
+
   public void addRoom(IRoom room) {
     roomMap.put(room.getRoomNumber(), room);
   }
 
   public IRoom getARoom(String roomId) {
-    if (roomMap.containsKey(roomId)) return roomMap.get(roomId);
+    if (hasRoom(roomId)) return roomMap.get(roomId);
     return null;
   }
 
@@ -60,7 +63,8 @@ public class ReservationService {
       }
     }
 
-    Collection<IRoom> availableRooms = roomMap.values();
+    HashMap<String, IRoom> roomMapCopy = (HashMap<String, IRoom>) roomMap.clone();
+    Collection<IRoom> availableRooms = roomMapCopy.values();
     availableRooms.removeAll(reservedRoomList);
 
     return availableRooms;
