@@ -2766,6 +2766,1227 @@
     
     * ![dependency_injection](./images/depedency_injection.png)
 
+### Guice guide
+
+* Since we are covering depedency injection, lets do a tour on Guice
+
+    * First step is to create an interface
+
+    * ```java
+        //spell checker interface
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+        ```
+
+    * Second step is to implement our brand new interface
+
+    * ```java
+            //spell checker implementation
+            class SpellCheckerImpl implements SpellChecker {
+                @Override
+                public void checkSpelling() {
+                    System.out.println("Inside checkSpelling." );
+                } 
+            }
+        ```
+
+    * After implementing the interface, we can create a Guice module to manage our bindings. This module will `extend` `AbstractModule`.
+
+    * ```java
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+            @Override
+            protected void configure() {
+                bind(SpellChecker.class).to(SpellCheckerImpl.class);
+            }
+        }
+        ```
+
+    * Create a class with dependencies to the interface.
+
+    * ```java
+        class TextEditor {
+            private SpellChecker spellChecker;
+            @Inject
+            public TextEditor(SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            }
+        }
+        ```
+
+    * Create a Guice injector
+
+    * ```java
+        Injector injector = Guice.createInjector(new TextEditorModule());
+        ```
+
+    * Get object with dependency fulfilled and use the object
+
+    * ```java
+        TextEditor editor = injector.getInstance(TextEditor.class);
+        editor.makeSpellCheck(); 
+        ```
+
+* Linking Bindings 
+
+    * In linked bindings Guice maps a type to its implementation. In the bellow example, we've mapped `SpellChecker` interface with its implementation `SpellCheckedImpl`.
+
+    * ```java
+        bind(SpellChecker.class).to(SpellCheckerImpl.class);
+        ```
+    
+    * We can also mapped the concrete class to its subclass. See the example bellow:
+  
+    * ```java
+        bind(SpellCheckerImpl.class).to(WinWordSpellCheckerImpl.class);
+        ```
+
+* Binding annotations
+
+    * As we can bind a type with its implementation. In case we want to map a type with multiple implementations, we can create custom annotations as well. See the bellow example:
+
+    * ```java
+        @BindingAnnotation 
+        @Target({ FIELD, PARAMETER, METHOD }) 
+        @Retention(RUNTIME)
+        @interface WinWord {}
+        ```
+
+        * `@BindingAnnotation` - Marks annotation as binding annotation.
+        * `@Target` - Marks applicability of annotation.
+        * `@Retention` - Marks availablility of annotation as runtime.
+
+    * Mapping using binding annotation
+
+        * ```java
+            bind(SpellChecker.class).annotatedWith(WinWord.class).to(WinWordSpellCheckerImpl.class);`
+            ```
+    * Inject using binding annotations
+
+        * ```java
+            @Inject
+            public TextEditor(@WinWord SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+            ```
+
+* Named bindings 
+
+    * Guice provides another way also to map bindings **without creating a custom annotation**. It allows so using `@Named` annotation.
+
+    * ```java
+        bind(SpellChecker.class).annotatedWith(Names.named("OpenOffice")).to(OpenOfficeWordSpellCheckerImpl.class);
+        ```
+    
+    * Injecting using the `@Named` annotation 
+
+    * ```java
+        @Inject
+        public TextEditor(@Named("OpenOffice") SpellChecker spellChecker) {
+            this.spellChecker = spellChecker;
+        }
+        ```
+
+* Constant Binding
+
+    * Guice provides a way to create binding with value objects or constants. Consider the case where we want to configure JDBC url.
+
+    * Inject using the `@Named` annotation.
+
+    * ```java
+        @Inject
+        public void connectDatabase(@Named("JBDC") String dbUrl) {
+            //...
+        }
+        ```
+    
+    * This can be achieved using `toInstance()` method.
+
+    * ```java
+        bind(String.class).annotatedWith(Names.named("JBDC")).toInstance("jdbc:mysql://localhost:5326/emp");
+        ```
+
+* `@Provides` Annotation
+
+    * Guice provides a way to create bindings with complex objects using `@provides` method.
+
+    * ```java
+        @Provides
+        public SpellChecker provideSpellChecker(){
+            String dbUrl = "jdbc:mysql://localhost:5326/emp";
+            String user = "user";
+            int timeout = 100;
+            SpellChecker SpellChecker = new SpellCheckerImpl(dbUrl, user, timeout);
+            return SpellChecker;
+        }
+        ```
+    
+    * This methos is being part of Binding Module and provides the complex object to be mapped. See the complete example below.
+
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+        import com.google.inject.Provides;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck();
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+            @Inject
+            public TextEditor( SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            } 
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() {} 
+
+            @Provides
+            public SpellChecker provideSpellChecker(){
+
+                String dbUrl = "jdbc:mysql://localhost:5326/emp";
+                String user = "user";
+                int timeout = 100;
+
+                SpellChecker SpellChecker = new SpellCheckerImpl(dbUrl, user, timeout);
+                return SpellChecker;
+            }
+        }
+
+        //spell checker interface
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+
+            private String dbUrl;
+            private String user;
+            private Integer timeout;
+
+            @Inject
+            public SpellCheckerImpl(String dbUrl, 
+                                    String user, 
+                                    Integer timeout){
+                this.dbUrl = dbUrl;
+                this.user = user;
+                this.timeout = timeout;
+            } 
+
+            @Override
+            public void checkSpelling() { 
+                System.out.println("Inside checkSpelling." );
+                System.out.println(dbUrl);
+                System.out.println(user);
+                System.out.println(timeout);
+            }
+        }
+        ```
+
+* Provider Interface
+
+    * As `@provides` method becomes more complex, these methods can be moved to seperate classes using `Provider interface`.
+
+
+    * ```java
+        class SpellCheckerProvider implements Provider<SpellChecker> {
+            @Override
+            public SpellChecker get() {
+                String dbUrl = "jdbc:mysql://localhost:5326/emp";
+                String user = "user";
+                int timeout = 100;
+                SpellChecker SpellChecker = new SpellCheckerImpl(dbUrl, user, timeout);
+                return SpellChecker;
+            } 
+        }
+        ```
+
+    * Next step is to map the provider to type.
+
+    * ```java
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() {
+                bind(SpellChecker.class)
+                    .toProvider(SpellCheckerProvider.class);
+            } 
+        }
+        ```
+
+* Constructor Bindings
+
+    * Guice provides a way to create bindings with specific constructor of an object using `toConstructor()` method.
+
+    * ```java
+        @Override
+        protected void configure() {
+            try {
+                bind(SpellChecker.class)
+                    .toConstructor(SpellCheckerImpl.class.getConstructor(String.class));
+                } catch (NoSuchMethodException | SecurityException e) {
+                System.out.println("Required constructor missing");
+            } 
+        } 
+        ```
+    
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+        import com.google.inject.name.Named;
+        import com.google.inject.name.Names;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck();
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+            @Inject
+            public TextEditor( SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            } 
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() {
+                try {
+                    bind(SpellChecker.class)
+                        .toConstructor(SpellCheckerImpl.class.getConstructor(String.class));
+                } catch (NoSuchMethodException | SecurityException e) {
+                    System.out.println("Required constructor missing");
+                } 
+                bind(String.class)
+                    .annotatedWith(Names.named("JDBC"))
+                    .toInstance("jdbc:mysql://localhost:5326/emp");
+            } 
+        }
+
+        //spell checker interface
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+
+            private String dbUrl;
+
+            public SpellCheckerImpl(){}
+
+            public SpellCheckerImpl(@Named("JDBC") String dbUrl){
+                this.dbUrl = dbUrl;
+            } 
+
+            @Override
+            public void checkSpelling() { 
+                System.out.println("Inside checkSpelling." );
+                System.out.println(dbUrl); 
+            }
+        }
+        ```
+
+* Inbuilt Bindings
+
+    * Guice provides inbuilt binding for `java.util.logging.Logger` class. Logger's name is automatically set to the name of the class into which the Logger is injected. See the example below.
+
+    * ```java
+        import java.util.logging.Logger;
+
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck();
+            } 
+        }
+
+        class TextEditor {
+            private Logger logger;
+
+            @Inject
+            public TextEditor( Logger logger) {
+                this.logger = logger;
+            }
+
+            public void makeSpellCheck(){
+                logger.info("In TextEditor.makeSpellCheck() method");
+            } 
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() {
+            } 
+        }
+        ```
+
+* Just-In-Time Bindings
+
+    * As bindings are defined in Binding Module, Guice uses them whenever it needs to inject dependencies. In case bindings are not present, it can attempt to create **just-in-time bindings**. Bindings present in binding module are called **explicit bindings** and are of higher precedence whereas just-in-time bindings are called **implicit bindings**. If both type of bindings are present, **explicit bindings are considered for mapping**.
+
+    * Following are the examples of three types of Just-in-time bindings.
+
+    * Injectable Constructors
+        * Non-private, No-argument constructors are eligible for just-in-time bindings. Another way is to **annotate a constructor with @Inject annotation**.
+    * `@ImplementatedBy` annotation
+        * `@ImplementatedBy` annotation tells the guice about the implementation class. No binding is required in Binding Module in such a case.
+    * `@ProvidedBy` annotation
+        * @ProvidedBy annotation tells the guice about the provider of implementation class. No binding is required in Binding Module in such a case.
+
+* Injectable Constructors
+
+    * Non-private, No-argument constructors are eligible for just-in-time bindings. Another way is to annotate a constructor with `@Inject` annotation. See the example:
+
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+        import com.google.inject.name.Named;
+        import com.google.inject.name.Names;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck();
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+
+            @Inject
+            public TextEditor( SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            } 
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() { 
+                bind(SpellChecker.class).to(SpellCheckerImpl.class);
+                bind(String.class)
+                    .annotatedWith(Names.named("JDBC"))
+                    .toInstance("jdbc:mysql://localhost:5326/emp");
+            } 
+        }
+
+        //spell checker interface
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+
+            @Inject @Named("JDBC")
+            private String dbUrl;
+
+            public SpellCheckerImpl(){}
+
+            @Override
+            public void checkSpelling() { 
+                System.out.println("Inside checkSpelling." );
+                System.out.println(dbUrl); 
+            }
+        }
+        ```
+
+* `@ImplementatedBy` annotation
+
+    * `@ImplementatedBy` annotation tells the guice about the implementation class. No binding is required in Binding Module in such a case. See the example:
+
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.ImplementedBy;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+        import com.google.inject.name.Named;
+        import com.google.inject.name.Names;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck();
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+
+            @Inject
+            public TextEditor( SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            } 
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() { 
+                bind(String.class)
+                    .annotatedWith(Names.named("JDBC"))
+                    .toInstance("jdbc:mysql://localhost:5326/emp");
+            } 
+        }
+
+        @ImplementedBy(SpellCheckerImpl.class)
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+
+            @Inject @Named("JDBC")
+            private String dbUrl;
+
+            public SpellCheckerImpl(){}
+
+            @Override
+            public void checkSpelling() { 
+                System.out.println("Inside checkSpelling." );
+                System.out.println(dbUrl); 
+            }
+        }
+        ```
+
+* `@ProvidedBy` Annotation
+    * `@ProvidedBy` annotation tells the guice about the provider of implementation class. No binding is required in Binding Module in such a case. See the example:
+
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+        import com.google.inject.ProvidedBy;
+        import com.google.inject.Provider;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck();
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+            @Inject
+            public TextEditor( SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            } 
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() {     
+            } 
+        }
+
+        @ProvidedBy(SpellCheckerProvider.class)
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+
+            private String dbUrl;
+            private String user;
+            private Integer timeout;
+
+            @Inject
+            public SpellCheckerImpl(String dbUrl, 
+                String user, 
+                Integer timeout){
+                this.dbUrl = dbUrl;
+                this.user = user;
+                this.timeout = timeout;
+            } 
+
+            @Override
+            public void checkSpelling() { 
+                System.out.println("Inside checkSpelling." );
+                System.out.println(dbUrl);
+                System.out.println(user);
+                System.out.println(timeout);
+            }
+        }
+
+        class SpellCheckerProvider implements Provider<SpellChecker>{
+
+            @Override
+            public SpellChecker get() {
+                String dbUrl = "jdbc:mysql://localhost:5326/emp";
+                String user = "user";
+                int timeout = 100;
+
+                SpellChecker SpellChecker = new SpellCheckerImpl(dbUrl, user, timeout);
+                return SpellChecker;
+            }
+        }
+        ```
+
+* Constructor Injection
+    * Injection is a process of injecting dependeny into an object. Constructor injection is quite common. In this process, dependency is injected as argument to the constructor. See the example below.
+
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck(); 
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+
+            @Inject
+            public TextEditor(SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            }
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() {
+                bind(SpellChecker.class).to(SpellCheckerImpl.class);
+            } 
+        }
+
+        //spell checker interface
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+
+            @Override
+            public void checkSpelling() {
+                System.out.println("Inside checkSpelling." );
+            } 
+        }
+        ```
+
+* Method Injection
+
+    * Injection is a process of injecting dependeny into an object. Method injection is used to **set value object as dependency to the object**. See the example below.
+
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.ImplementedBy;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+        import com.google.inject.name.Named;
+        import com.google.inject.name.Names;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck();
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+
+            @Inject
+            public TextEditor( SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            } 
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() { 
+                bind(String.class)
+                    .annotatedWith(Names.named("JDBC"))
+                    .toInstance("jdbc:mysql://localhost:5326/emp");
+            } 
+        }
+
+        @ImplementedBy(SpellCheckerImpl.class)
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+        
+            private String dbUrl;
+
+            public SpellCheckerImpl(){}
+            
+            @Inject 
+            public void setDbUrl(@Named("JDBC") String dbUrl){
+                this.dbUrl = dbUrl;
+            }
+
+            @Override
+            public void checkSpelling() { 
+                System.out.println("Inside checkSpelling." );
+                System.out.println(dbUrl); 
+            }
+        }
+        ```
+
+* Field Injection
+
+    * Injection is a process of injecting dependeny into an object. Field injection is used to set value object as dependency to the field of an object. See the example below.
+
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.ImplementedBy;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+        import com.google.inject.name.Named;
+        import com.google.inject.name.Names;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck();
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+
+            @Inject
+            public TextEditor( SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            } 
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() { 
+                bind(String.class)
+                    .annotatedWith(Names.named("JDBC"))
+                    .toInstance("jdbc:mysql://localhost:5326/emp");
+            } 
+        }
+
+        @ImplementedBy(SpellCheckerImpl.class)
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+
+            @Inject @Named("JDBC")
+            private String dbUrl;
+
+            public SpellCheckerImpl(){}
+
+            @Override
+            public void checkSpelling() { 
+                System.out.println("Inside checkSpelling." );
+                System.out.println(dbUrl); 
+            }
+        }
+        ```
+
+* Optional Injection
+
+    * Injection is a process of injecting dependeny into an object. Optional injection means injecting the dependency if exists. `Method` and `Field` injections may be optionally dependent and **should have some default value if dependency is not present**. See the example below.
+
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.ImplementedBy;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+        import com.google.inject.name.Named;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck();
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+
+            @Inject
+            public TextEditor( SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            } 
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() {} 
+        }
+
+        @ImplementedBy(SpellCheckerImpl.class)
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+
+            private String dbUrl = "jdbc:mysql://localhost:5326/emp";
+
+            public SpellCheckerImpl(){}
+            
+            @Inject(optional=true)
+            public void setDbUrl(@Named("JDBC") String dbUrl){
+                this.dbUrl = dbUrl;
+            }
+
+            @Override
+            public void checkSpelling() { 
+                System.out.println("Inside checkSpelling." );
+                System.out.println(dbUrl); 
+            }
+        }
+        ```
+
+* On Demand Injection
+
+    * Injection is a process of injecting dependeny into an object. `Method` and `field` injections can be used to initialize using exiting object using `injector.injectMembers()` method. See the example below.
+
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.ImplementedBy;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                SpellChecker spellChecker = new SpellCheckerImpl();
+                injector.injectMembers(spellChecker);
+                
+                TextEditor editor = injector.getInstance(TextEditor.class);     
+                editor.makeSpellCheck();
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+
+            @Inject
+            public void setSpellChecker(SpellChecker spellChecker){
+                this.spellChecker = spellChecker;
+            }
+            public TextEditor() { }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            } 
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() {      
+            } 
+        }
+
+        @ImplementedBy(SpellCheckerImpl.class)
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+
+            public SpellCheckerImpl(){}
+            
+            @Override
+            public void checkSpelling() { 
+                System.out.println("Inside checkSpelling." );
+            }
+        }
+        ```
+
+* Scopes
+
+    * Guice returns a **new instance every time when it supplies a value as its default behaviour**. It is configurable via scopes. Following are the scopes that Guice supports:
+
+        * `@Singleton` - Single instance for lifetime of the application. `@Singleton` object needs to be threadsafe.
+
+        * `@SessionScoped` - Single instance for a particular session of the web application. `@SessionScoped` object needs to be threadsafe.
+
+        * `@RequestScoped` - Single instance for a particular request of the web application. `@RequestScoped` object does not need to be threadsafe.
+
+    * At Class level
+
+        * ```java
+            @Singleton
+            class SpellCheckerImpl implements SpellChecker {
+
+                public SpellCheckerImpl(){}
+                
+                @Override
+                public void checkSpelling() { 
+                    System.out.println("Inside checkSpelling." );
+                }
+            }
+            ```
+    
+    * At Configuration level
+
+        * ```java
+            bind(SpellChecker.class).to(SpellCheckerImpl.class).in(Singleton.class);
+            ```
+    
+    * At Method level
+
+      * ```java
+          @Provides @Singleton
+          public SpellChecker provideSpellChecker(){
+
+              String dbUrl = "jdbc:mysql://localhost:5326/emp";
+              String user = "user";
+              int timeout = 100;
+
+              SpellChecker SpellChecker = new SpellCheckerImpl(dbUrl, user, timeout);
+              return SpellChecker;
+          }
+        ```
+
+    * `@Singleton Annotation` example
+
+        * ```java
+            import com.google.inject.AbstractModule;
+            import com.google.inject.Guice;
+            import com.google.inject.Inject;
+            import com.google.inject.Injector;
+            import com.google.inject.Singleton;
+
+            public class GuiceTester {
+                public static void main(String[] args) {
+                    Injector injector = Guice.createInjector(new TextEditorModule());
+                    SpellChecker spellChecker = new SpellCheckerImpl();
+                    injector.injectMembers(spellChecker);
+
+                    TextEditor editor = injector.getInstance(TextEditor.class);     
+                    System.out.println(editor.getSpellCheckerId());
+
+                    TextEditor editor1 = injector.getInstance(TextEditor.class);     
+                    System.out.println(editor1.getSpellCheckerId());
+                } 
+            }
+
+            class TextEditor {
+                private SpellChecker spellChecker;
+
+                @Inject
+                public void setSpellChecker(SpellChecker spellChecker){
+                    this.spellChecker = spellChecker;
+                }
+                public TextEditor() { }
+
+                public void makeSpellCheck(){
+                    spellChecker.checkSpelling();
+                } 
+
+                public double getSpellCheckerId(){
+                    return spellChecker.getId();
+                }
+            }
+
+            //Binding Module
+            class TextEditorModule extends AbstractModule {
+
+                @Override
+                protected void configure() {   
+                    bind(SpellChecker.class).to(SpellCheckerImpl.class);
+                } 
+            }
+
+            interface SpellChecker {
+                public double getId();
+                public void checkSpelling();
+            }
+
+            @Singleton
+            class SpellCheckerImpl implements SpellChecker {
+
+                double id; 
+                public SpellCheckerImpl(){
+                    id = Math.random();    
+                }
+
+                @Override
+                public void checkSpelling() { 
+                    System.out.println("Inside checkSpelling." );
+                }
+
+                @Override
+                public double getId() { 
+                    return id;
+                }
+            }
+            ```
+
+* Result Without `@Singleton` Annotation
+
+    * ```java
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                SpellChecker spellChecker = new SpellCheckerImpl();
+                injector.injectMembers(spellChecker);
+
+                TextEditor editor = injector.getInstance(TextEditor.class);     
+                System.out.println(editor.getSpellCheckerId());
+
+                TextEditor editor1 = injector.getInstance(TextEditor.class);     
+                System.out.println(editor1.getSpellCheckerId());
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+
+            @Inject
+            public void setSpellChecker(SpellChecker spellChecker){
+                this.spellChecker = spellChecker;
+            }
+            public TextEditor() { }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            } 
+
+            public double getSpellCheckerId(){
+                return spellChecker.getId();
+            }
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() {   
+                bind(SpellChecker.class).to(SpellCheckerImpl.class);
+            } 
+        }
+
+        interface SpellChecker {
+            public double getId();
+            public void checkSpelling();
+        }
+
+        class SpellCheckerImpl implements SpellChecker {
+
+            double id; 
+            public SpellCheckerImpl(){
+                id = Math.random();    
+            }
+
+            @Override
+            public void checkSpelling() { 
+                System.out.println("Inside checkSpelling." );
+            }
+
+            @Override
+            public double getId() { 
+                return id;
+            }
+        }
+        ```
+
+* AOP - Aspect Oriented Programming
+
+    * AOP, Aspect oriented programming entails breaking down program logic into distinct parts called so-called **concerns**. The functions that span multiple points of an application are called **cross-cutting concerns** and these cross-cutting concerns are conceptually separate from the application's business logic. There are various common good examples of aspects like **logging, auditing, declarative transactions, security, caching, etc**.
+
+    * The key unit of modularity in OOP is the class, whereas in **AOP the unit of modularity is the aspect**. Dependency Injection helps you decouple your application objects from each other and AOP helps you decouple **cross-cutting concerns** from the objects that they affect. AOP is like triggers in programming languages such as Perl, .NET, Java, and others. **Guice provides interceptors to intercept an application. For example, when a method is executed, you can add extra functionality before or after the method execution.**
+
+    * Important Classes
+
+        * **Matcher** - Matcher is an interface to either accept or reject a value. In Guice AOP, we need two matchers: one to define which classes participate, and another for the methods of those classes.
+
+        * **MethodInterceptor** - MethodInterceptors are executed when a matching method is called. **They can inspect the call**: the method, its arguments, and the receiving instance. We can perform cross-cutting logic and then delegate to the underlying method. Finally, we may inspect the return value or exception and return.
+
+    * ```java
+        import java.lang.annotation.ElementType;
+        import java.lang.annotation.Retention;
+        import java.lang.annotation.RetentionPolicy;
+        import java.lang.annotation.Target;
+
+        import org.aopalliance.intercept.MethodInterceptor;
+        import org.aopalliance.intercept.MethodInvocation;
+
+        import com.google.inject.AbstractModule;
+        import com.google.inject.Guice;
+        import com.google.inject.Inject;
+        import com.google.inject.Injector;
+        import com.google.inject.matcher.Matchers;
+
+        public class GuiceTester {
+            public static void main(String[] args) {
+                Injector injector = Guice.createInjector(new TextEditorModule());
+                TextEditor editor = injector.getInstance(TextEditor.class);
+                editor.makeSpellCheck(); 
+            } 
+        }
+
+        class TextEditor {
+            private SpellChecker spellChecker;
+
+            @Inject
+            public TextEditor(SpellChecker spellChecker) {
+                this.spellChecker = spellChecker;
+            }
+
+            public void makeSpellCheck(){
+                spellChecker.checkSpelling();
+            }
+        }
+
+        //Binding Module
+        class TextEditorModule extends AbstractModule {
+
+            @Override
+            protected void configure() {
+                bind(SpellChecker.class).to(SpellCheckerImpl.class);
+                bindInterceptor(Matchers.any(), 
+                    Matchers.annotatedWith(CallTracker.class), 
+                    new CallTrackerService());
+            } 
+        }
+
+        //spell checker interface
+        interface SpellChecker {
+            public void checkSpelling();
+        }
+
+        //spell checker implementation
+        class SpellCheckerImpl implements SpellChecker {
+
+            @Override @CallTracker
+            public void checkSpelling() {
+                System.out.println("Inside checkSpelling." );
+            } 
+        }
+
+        @Retention(RetentionPolicy.RUNTIME) @Target(ElementType.METHOD)
+        @interface CallTracker {}
+
+        class CallTrackerService implements MethodInterceptor  {
+
+            @Override
+            public Object invoke(MethodInvocation invocation) throws Throwable {
+                System.out.println("Before " + invocation.getMethod().getName());
+                Object result = invocation.proceed();
+                System.out.println("After " + invocation.getMethod().getName());
+                return result;
+            }
+        }
+        ```
+
 ### Reflection
 
 * What is Reflection?
