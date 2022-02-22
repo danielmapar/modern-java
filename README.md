@@ -874,7 +874,7 @@
         }
         ```
 
-## Java Fundamentals 
+## Advanced Java Programming Techniques
 
 ### Functional Programming in Java
 
@@ -970,7 +970,7 @@
 
     * Notice that functional interfaces are Java interfaces, and just like a non-functional Java interface, they are allowed to have type parameters. Here, Predicate has one type parameter T, which is the type being tested.
 
-    * Predicate's one abstract method is `test()`. `test()` is known as the functional method. "Abstract" means the method is not implemented, so in order to be a `functional method`, it cannot have a default implementation. However, functional interfaces can have other default methods. In this case, the Predicate interface has a default method called negate() that returns another Predicate.
+    * Predicate's one abstract method is `test()`. `test()` is known as the functional method. "Abstract" means the method is not implemented, so in order to be a `functional method`, it cannot have a default implementation. However, functional interfaces can have other default methods. In this case, the Predicate interface has a default method called `negate()` that returns another Predicate.
 
     * The `@FunctionalInterface` annotation at the top serves two important purposes:
 
@@ -1226,7 +1226,7 @@
         ![stream](./images/stream.png)
     
     * A stream pipeline consists of creating a stream, calling intermediate operations on the stream, and then terminating the stream using a terminal operation.   
-        * Streams are `single-use`. Once you do an operation on a Stream, you cannot to any more operations on that same stream. This means intermediate operations always return a brand new Stream, never the original.
+        * Streams are `single-use`. Once you do an operation on a Stream, you cannot do any more operations on that same stream. This means intermediate operations always return a brand new Stream, never the original.
         * Streams are `lazily evaluated`. **No computation happens until the very end**, when the terminal operation is called.
     
     * ```java
@@ -3952,8 +3952,8 @@
             @Override
             protected void configure() {
                 bind(SpellChecker.class).to(SpellCheckerImpl.class);
-                bindInterceptor(Matchers.any(), 
-                    Matchers.annotatedWith(CallTracker.class), 
+                bindInterceptor(Matchers.any(), // which class to match
+                    Matchers.annotatedWith(CallTracker.class),  // whitch method to match
                     new CallTrackerService());
             } 
         }
