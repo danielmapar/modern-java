@@ -1522,8 +1522,9 @@
     * You saw in the previous section that `Readers` and `Writers` use standard character encodings to convert between bytes and text.
 
 * Different Unicode Encodings
+    * UTF = (Unicode Transformation Format
 
-    * UTF-8
+    * UTF-8 
         * Generally speaking, you should use UTF-8. Most HTML documents use this encoding.
 
         * It uses at least 8 bits of data to store each character. This can lead to more efficient storage, especially when the text contains mostly English ASCII characters. But higher-order characters, such as non-ASCII characters, may require up to 24 bits each!
