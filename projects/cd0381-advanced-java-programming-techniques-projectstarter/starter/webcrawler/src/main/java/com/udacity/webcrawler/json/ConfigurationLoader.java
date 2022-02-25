@@ -1,5 +1,6 @@
 package com.udacity.webcrawler.json;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.io.Reader;
 import java.io.IOException;
 import java.nio.file.Path;

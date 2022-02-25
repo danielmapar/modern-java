@@ -2926,7 +2926,7 @@
         }
         ```
     
-    * This methos is being part of Binding Module and provides the complex object to be mapped. See the complete example below.
+    * This method is being part of Binding Module and provides the complex object to be mapped. See the complete example below.
 
     * ```java
         import com.google.inject.AbstractModule;

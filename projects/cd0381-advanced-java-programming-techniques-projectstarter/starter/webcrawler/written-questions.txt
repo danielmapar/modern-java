@@ -11,6 +11,9 @@ Q1. Run the web crawler using the configurations located at src/main/config/writ
 
     Why did the parser take more time when run with ParallelWebCrawler?
 
+    Answer: The reason why the parser took longer for ParallelWebCrawler is that the
+            ProfilingState#record method stores the sum of elapsed time of all threads (v.plus(elapsed)).
+            Check ProfilingState line 34 for more details.
 
 Q2. Your manager ran your crawler on her old personal computer, using the configurations from Q1, and she notices that
     the sequential crawler actually outperforms the parallel crawler. She would like to know why.
@@ -18,21 +21,52 @@ Q2. Your manager ran your crawler on her old personal computer, using the config
     (a) Suggest one reason why the sequential web crawler was able to read more web pages than the parallel crawler.
         (Hint: Try setting "parallelism" to 1 in the JSON configs to simulate your manager's computer.)
 
+    Answer: It is possible that the user does not have a CPU with multi thread support. On that note, as much as we create
+            threads in our program, those will be "virtual" threads running concurrently (not in parallel).
+            This leads to a lot of context switching in the users machine, making such parallel solution probably
+            slower compared to a sequential one because of the lack of multi thread hardware support.
+
     (b) Suggest one scenario in which the parallel web crawler will almost certainly perform better than the sequential
         crawler. Why will it perform better?
 
+    Answer: The parallel web crawler will perform better if it runs on a multi thread machine (multiple cores).
 
 Q3. Analyze your method profiler through the lens of Aspect Oriented Programming, by answering the following questions:
 
     (a) What cross-cutting concern is being addressed by the com.udacity.webcrawler.profiler.Profiler class?
 
+    Answer: Performance profiling / performance metrics.
+
     (b) What are the join points of the Profiler in the web crawler program?
 
+    Answer: That would be any method that utilizes the @Profiled annotation.
+            Examples: WebCrawler#crawl and PageParser#parse.
 
 Q4. Identify three (3) different design patterns used in this project, and explain which interfaces, classes, and/or
     libraries use or implement those design patterns.
 
     For each pattern, name one thing about the pattern that you LIKED, and one thing you DISLIKED. If you did not like
     anything, you can name two things you disliked.
+
+    Answer:
+
+     * Builder pattern
+        Used at:
+          * Classes: ParserModule, CrawlerConfiguration and CrawlResult.
+          * Interfaces: PageParser.
+        LIKED: Makes it easier to build complicated objects.
+        DISLIKED: It requires a lot of boilerplate code, specially setters.
+
+     * Dependency injection
+        Used at:
+          * Classes: WebCrawlerMain and Profiler.
+        LIKED: Dependency injections makes integrating and testing a new implementations of an interface super easy.
+        DISLIKED: The necessity of creating injectors, modules and bindings / providers. A bit of a learning curve for Guice.
+
+     * Proxy pattern
+         Used at:
+           * Classes: ProfilerImpl
+         LIKED: The fact that it enables multiple implementations of a class in run-time is super awesome.
+         DISLIKED: I think it brings complexity to the code-base, probably something like Guice Method Interface could be used instead (bindInterceptor).
 
 
