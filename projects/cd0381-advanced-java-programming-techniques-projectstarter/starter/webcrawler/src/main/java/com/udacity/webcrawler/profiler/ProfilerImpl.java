@@ -1,9 +1,11 @@
 package com.udacity.webcrawler.profiler;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.Writer;
@@ -52,10 +54,8 @@ final class ProfilerImpl implements Profiler {
 
   @Override
   public void writeData(Path path) {
-    try (FileWriter fileWriter = new FileWriter(path.toString(), true)) {
-      BufferedWriter writer = new BufferedWriter(fileWriter);
+    try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
       this.writeData(writer);
-      writer.close();
     } catch (IOException e) {
       System.out.println("Failed to write profile file.");
       e.printStackTrace();

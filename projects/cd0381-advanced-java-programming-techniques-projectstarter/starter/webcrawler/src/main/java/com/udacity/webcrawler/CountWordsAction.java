@@ -51,10 +51,8 @@ public class CountWordsAction extends RecursiveAction {
         return;
     }
 
-    if (visitedUrls.contains(url))
+    if (!visitedUrls.add(url))
       return;
-
-    visitedUrls.add(url);
 
     PageParser.Result result = parserFactory.get(url).parse();
     countWordsInUrl(result, wordCounts);
