@@ -5462,3 +5462,36 @@
             }
         }
         ```
+
+## Java Application Deployment
+
+### Running Java Applications
+
+* Java Virtual Machine (JVM)
+
+    * Computing devices using an operating system to translate application requests into a language the hardware can understand. This means that applications need to take the operating system and hardware into account when! The Java Virtual Machine acts as an intermediary between a Java program and the operating system so that your Java program can run on any machine that has a JVM installed.
+
+    * ![os_jvm_diagram](./images/os_jvm_diagram.jpeg) 
+
+    * Virtual Machine: a software application that emulates the inputs and outputs of another device
+
+    * JVM: Java Virtual Machine, a virtual machine that acts as an interface to an operating system. The input to the JVM is Java Bytecode, and the output from the JVM will vary depending on which operating system it is written for.
+
+    * Assembly Language: A language specific to a particular hardware device, with commands that map to the capabilities of that device.
+
+    * Binary: The zeros and ones of a program that hardware can actually read.
+
+    * Bytecode: An intermediate language that the JVM can understand. Java programs compile into Bytecode.
+
+* What is Java Bytecode?
+
+    * Java Bytecode is like assembly language for the JVM. The Java compiler takes all of our Java source code and turns it into simple statements that are easier for the JVM to translate.
+
+    * ```java
+        public static main([Ljava/lang/String;)V
+        L0
+            LINENUMBER 5 L0
+            GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
+            LDC "Hello World"
+            INVOKEVIRTUAL java/io/PrintStream.println
+        ```
