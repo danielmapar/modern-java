@@ -1522,7 +1522,7 @@
     * You saw in the previous section that `Readers` and `Writers` use standard character encodings to convert between bytes and text.
 
 * Different Unicode Encodings
-    * UTF = (Unicode Transformation Format
+    * UTF = (Unicode Transformation Format)
 
     * UTF-8 
         * Generally speaking, you should use UTF-8. Most HTML documents use this encoding.
@@ -1893,7 +1893,7 @@
                 }
                 System.out.println("Wrote to " + outputPath.toAbsolutePath().toString());
 
-                try (ObjectInputStream in = new ObjectInputStream(Files.    newInputStream(outputPath))) {
+                try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(outputPath))) {
                     UdacisearchClient deserialized = (UdacisearchClient) in.readObject();
                     System.out.println("Deserialized " + deserialized);
                 }
@@ -2402,6 +2402,8 @@
         * Callers fill in the blanks by **extending** the base class and **overriding** the placeholder methods.
     
     * ![design_pattern_examples](./images/design_pattern_examples.png)
+
+    * [Observer Pattern example](https://www.tutorialspoint.com/design_pattern/observer_pattern.htm)
 
 * Structural Patterns
 
@@ -5011,7 +5013,7 @@
 
         * Data structures and tools in the `java.util.concurrent` package that are specifically designed for concurrent access:
 
-        * Map<String, Integer> votes = new ConcurrentHashMap<>();
+        * `Map<String, Integer> votes = new ConcurrentHashMap<>();`
 
         * ![syncronized_1](./images/syncronized_1.png)
 
@@ -5495,3 +5497,105 @@
             LDC "Hello World"
             INVOKEVIRTUAL java/io/PrintStream.println
         ```
+
+    * We can examine bytcode by running the Java decompiler utility.
+        * `javap -c Test` (We have a `Test.class` inside of the directory)
+
+
+* What is the Java Development Kit?
+
+    * `Java Development Kit` is a package containing the tools used to compile and package Java programs, along with the core libraries used to write Java programs. It also contains the `Java Runtime Environment` (JRE) which is used to run Java programs.
+
+    * ![jdk](./images/jdk.png)
+
+    * Useful JDK Tools:
+        * `javac`: Compile source files into class files
+        * `java`: Execute java programs on the Java Runtime Environment (JRE)
+            * JRE: Collection of environment-specific libraries needed to run Java on this device
+        * More! - jar, jpackage, jshell, jdeps, keytool and more...
+
+* Building Java Applications
+
+    * All Java Archieve File (JAR) is pretty much a ZIP with a bunch of byte-code (`.class`) some metadata files that describe the app structure. The only difference between a JAR file and a ZIP file is that a JAR has an extra directory called `META-INF` that contains a `MANIFEST.MF` file.  
+
+    * ![jar](./images/jar.png) 
+
+    * ![jar2](./images/jar2.png) 
+
+    * Another kind of Java package is the `WAR` file, the `Web Archieve`. A `WAR` is designed to be deployed at a Java Web Application Server. So, besides a `META-INF`, the `WAR` file also contains a `WEB-INF` directory that has the `class` files that will run on a server, as well as files used by the Application Server to map Servlet requests to your Java classes. The `WAR` also contain folders for static content such as `html`, `js` and `css`.
+        * A servlet is a Java programming language class that is used to extend the capabilities of servers that host applications accessed by means of a request-response programming model. Although servlets can respond to any type of request, they are commonly used to extend the applications hosted by web servers. For such applications, Java Servlet technology defines HTTP-specific servlet classes. 
+
+    * ![war](./images/war.png) 
+
+    * Finally, we also got Android Package Files (`APK`). Same as a `JAR` it contains a `META-INF` directory, but it also contains a set of files that describre how this application should run on Android. It has an `AndroidManifest.xml` to identify the access rights and library files, but it also contains some other resource specific folders.
+
+    * ![apk](./images/apk.png)
+
+
+    * How to create a `JAR`? 
+        * `javac Test.java`
+        * `jar -cfe Test.jar Test *.class`
+            * Comes with the JDK and creates a `Manifest.MF` for us
+            * `-c` for a new archieve 
+            * `-f` to allow us to specify the jar file name
+            * `-e` to allow us to specify an entry point to the application
+        * `java -jar Test.jar`
+
+* Running Java Applications
+
+    * ![java_comp](./images/java_comp.png)
+
+        * Previous versions of Java (Java 1.3 or lower) used to interprete bytecode. However, nowadays Java bytecode is mostly compiled to machine code by the JVM. 
+
+        * This behaviour is called `JIT` (Just in time compilation). This provides Java with better performence compared to a simple bytecode interpreter.
+
+    * ![jit](./images/jit.png)
+
+    * Originally, Java bytecode was executed directly by the JVM, one line at a time. That means the JVM functioned as an interpreter. As of Java 1.3, the JVM pre-compiles parts of the bytecode into machine code and saves it for later use.
+
+    * ![jit2](./images/jit2.png) 
+        
+        * Java uses something called a `HotSpot VM` to monitor the code while it is executing. This VM uses a profile to optimize the compilation process and produce more efficient machine code.
+
+        * The `HotSpot JVM` Profiles your program as it runs, and it delays compilation till the program executes. By doing that, the compiler has more information about how the program runs, allowing it to make additional optimazations, in some cases offering better performance compared to a program compiled fully in advance.
+
+    * ![jit3](./images/jit3.png)
+        * In Java 8 and later, the JVM uses both of those compilers.
+
+* Interpreter vs. Compilation
+Interpreter:
+  * Parses Bytecode Line-by-Line
+  * Performs the operation requested by each bytecode statement
+  * Starts fast, but runs slower
+
+* Compilation:
+  * JVM compiles bytecode into machine code in advance
+  * Saves machine code for reuse
+  * Takes longer to start, but runs faster after beginning
+
+* Tiered Compilation
+  * As of Java 8, the JVM will use two different compilers. The `Client Compiler, or C1`, quickly compiles the bytecode into machine code and lets the application start right away, while the `Server Compiler, or C2`, recompiles the application based on the information from the profiler.
+  
+* Hotspot performance enhancements: https://docs.oracle.com/en/java/javase/15/vm/java-hotspot-virtual-machine-performance-enhancements.html
+
+* Compiler Optimization: https://docs.oracle.com/javacomponents/jrockit-hotspot/migration-guide/comp-opt.html
+
+
+* Read-Eval-Print Loop (REPL)
+
+    * Having access to a simple interactive interface for executing program code makes it easier to experiment and learn about a language. Java 9 introduced a `REPL` with the program `JShell`, which you can find in the `/bin` directory of your JDK installation.
+
+    * To start `JShell`, simply type `jshell` from any command prompt that has access to this directory. If you can run `java` and `javac`, you should also be able to run `jshell`.
+
+    * Once you've entered `JShell`, you can type any normal java code to have it immediately executed. Pressing tab will offer code completion suggestions and display `javadoc` documentation.
+
+    * Useful Commands
+        * `/vars` - Prints a list of all the variables you've declared.
+        * `/types` - Prints all the classes you've defined.
+        * `/methods` - Prints all the methods you've defined.
+        * `/list` - Prints all the source code you've entered.
+        * `/exit` - Closes JShell
+
+    * You could also load `JAR` into the JShell by doing `jshell -class-path /path/to/file.jar`
+
+* ![java_history](./images/java_history.png) 
