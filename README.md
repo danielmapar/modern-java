@@ -5541,8 +5541,6 @@
             * `-e` to allow us to specify an entry point to the application
         * `java -jar Test.jar`
 
-* Running Java Applications
-
     * ![java_comp](./images/java_comp.png)
 
         * Previous versions of Java (Java 1.3 or lower) used to interprete bytecode. However, nowadays Java bytecode is mostly compiled to machine code by the JVM. 
@@ -5599,3 +5597,288 @@ Interpreter:
     * You could also load `JAR` into the JShell by doing `jshell -class-path /path/to/file.jar`
 
 * ![java_history](./images/java_history.png) 
+
+
+### Dependency Management with Maven
+
+* Maven Phases
+
+    * Maven organizes the build process into phases. Each phase represents a different step of the build lifecycle.
+
+    * ![maven](./images/maven.jpg)
+
+        * Validate: Checks the `pom.xml` for dependencies / syntax.
+        * Compile: Compiles the program into `.class` files. 
+        * Test: Runs unit tests from the project that do not require the program to be packed (`JAR` etc.)
+        * Package: Packages the code into a `JAR`, `WAR`, `APK`, etc.. Integrations tests are run against the package and verified.
+        * Install: Move `JAR` to the local copy of your Maven repository 
+        * Deploy: If you have a remote repository configured, Maven can copy that `JAR` to the remote location.
+
+    * Executing a phase in maven will run all the preceding phases in order. When Maven reaches each phase, it will process all the goals attached to that phase.
+
+    * **Phase**: A step in the Maven build process. Each phase is part of a lifecycle and contains many goals.
+
+    * **Goal**: An action Maven should perform. The implementation of each goal is performed by a plugin.
+
+    * **Lifecycle**: An ordered list of phases that Maven associates with creating a particular type of package.
+
+* Introduction to XML
+
+    * XML Objects
+
+        * XML is a markup language that allows us to define object data using tags. This example describes a `person` object with the `name` Alex and the `age` 342. These tags are nested, which means that the `name` tag is inside the `person` tag. Each element consists of an open tag and a close tag, along with its data. A close tag is the same as the open tag, but begins with a slash(/), so in this example, `<name>` is an open tag and `</name>` is its closing tag.
+    
+    * ```xml
+        <person isACat="false">
+            <name>Alex</name>
+            <age>342</age>
+        </person>
+
+        <person isACat="false" name="Alex" age="342">
+        ```
+    
+    * Attribute: A way to represent a nested XML element inside the definition of the enclosing tag.
+
+    * Tag: The name of an XML element enclosed in angle brackets. <person> is a person tag.
+
+    * Element: The combination of a pair of XML tags with its enclosed data.
+
+    * Well-formed: Well-formed XML has only a single element at the top level. All open tags have a close tag, and all tags close before the tag that encloses them.
+
+* Maven Projects
+
+    * `Pom.xml`
+        * Each Maven project is defined by a file called pom.xml. This stands for Project Object Model. The Pom has 4 required elements:
+
+        * `modelVersion`: The format of the current pom. Should always be 4.0.0 at this time.
+        * `groupId`: The group identifier for your project. Can be shared with other projects.
+        * `artifactId`: The specific identifier for this project. Combination of `artifactId` and `groupId` uniquely identifies your project.
+        * `version`: An arbitrary additional identifier indicating which version of your artifact you're on. By incrementing this, you can use can use Maven to keep track of different versions of your project.
+
+        * ![pom](./images/pom.xml)
+    
+    * ```xml
+        <project>
+            <modelVersion> 4.0.0 </modelVersion>
+
+            <groupId> com.udacity.jpnd </groupId>
+            <artifactId> maven-test </artifactId>
+            <version> 1.0.0 </version>
+        </project>
+        ```
+    
+    * Maven Phases and pom.xml
+
+        * You can run maven by using the `mvn` command followed by the phase you wish to run. In our demo, we created the above minimal `pom.xml` in a directory and then ran the package command to build our project: `mvn package`
+
+* Creating a New Maven Project
+
+    * You can create Maven projects using the `archetype:generate` goal. You can run this goal from the command line or through an IDE wizard.
+
+    * To use generate a new project from the command line:
+
+    * Use the command `mvn archetype:generate`
+        * Press enter to accept the default template, which is the maven quickstart project.
+        * Press enter again to accept the newest version of the quickstart template.
+        * Fill in the required elements of a minimal pom.
+        * Maven will create a new project directory with a pom.xml some starter source code and test directories.
+
+* Standard Directory Layout
+
+    * Maven automatically looks for source code, resources, tests, and other files in certain folders by default. You can see a list of the Standard Directory Layout in the Maven Documentation:
+
+    * https://maven.apache.org/guides/introduction/introduction-to-the-standard-directory-layout.html
+
+    * ![maven-standard-directory-layout](./images/maven-standard-directory-layout.jpg) 
+
+    * `src`:
+        * `main`: Contains source code and resources related to your project.
+        * `test`: Contains source code and resources for testing your project.
+
+    * `java`: Both Java folders hold your `.java` source files.
+
+    * `resources`: Contains non-java files related to running and building your project. Commonly holds properties files.
+
+    * `filters`: Contains resource filter files that Maven will use when filtering resources.
+
+* Maven Dependencies
+
+    * Maven can automatically download project dependencies and include them as part of your project build. It stores a single copy of each dependency in its local repository and adds them to the build path when necessary.
+
+    * Maven dependencies are added to your `pom.xml` by providing the same unique identifying information that is required in the minimal `pom` for your own project. Each dependency is a single element in a list of dependencies. This snippet will include the JUnit Jupiter artifact in your project.
+
+    * ```xml
+        <dependencies>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.7.0</version>
+            </dependency>
+        </dependencies>
+        ```
+    
+    * Dependency: External Java source, often a JAR, that is not part of your program and not part of the Java standard library.
+
+    * Maven Dependency Location: Local copies of Maven dependencies are stored at:
+
+        * `/user/.m2/repository`
+    
+    * ![maven_dependencies](./images/maven_dependencies.png)
+
+* Dependency Scope
+    * The scope element of a dependency tells Maven when to include that dependency.
+
+        * Compile: Default scope. Dependency will be available for all Maven actions.
+        * Test: Only available when building and running unit tests.
+        * Runtime: Only available when application runs (not when compiled).
+        * Provided: Only available during compilation (not when run).
+            * The webserver is not available at compilation (servlet)
+        * System: *DEPRECATED. *Specify a local jar file as a dependency.
+        * Import: Import all dependencies from another pom.
+    
+    * This example tells Maven to only include the JUnit dependency during test phases.
+        * ```xml
+            <dependencies>
+                <dependency>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>junit-jupiter</artifactId>
+                    <version>5.7.0</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            ```
+
+* Dependency Type
+
+    * The type element tells Maven what type of artifact is provided by a dependency. The value for this element should correspond to the type provided by the packaging element in that dependency's pom. Packaging types supported by core Maven implementation:
+
+        * `jar`: default java archive
+        * `war`: web archive
+        * `ear`: enterprise archive containing one or more war files as well as enterprise java bean (ejb) modules packaged as jars
+        * `rar`: resource adapter - used by enterprise java applications to enable access to foreign systems
+        * `maven-plugin`: package a project to be used as a maven plugin
+        * `pom`: the pom of this project is the primary artifact to produce. Used for parent projects containing multiple modules, as well as projects that you wish to including using 'import' scope dependencies
+        
+    * This example would specify to Maven that the JUnit dependency to be included is a JAR. This is unnecessary, as JAR is the default type, but would be necessary if JUnit came as a different kind of package.
+
+    * ```xml
+        <dependencies>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.7.0</version>
+                <scope>test</scope>
+                <type>jar</type>
+            </dependency>
+        </dependencies>
+        ```
+
+* Transitive Dependencies
+
+    * A transitive dependency is a resource required by one of the dependencies included in your project. For example, if I declare a dependency on the testing utility Mockito, its dependency JUnit will become a transitive dependency of my project.
+
+    * ![transient_dependency](./images/transient_dependency.jpg)
+
+    * If your project has multiple transitive dependencies, the nearest definition will win. That means the first one declared in your `pom` if the dependencies are all at the same depth. If your transitive dependencies are nested more deeply, the version with the shallowest depth will be chosen. In the below example, `JUnit 5.7` will be chosen.
+
+    * ![transient_dependency](./images/transient_dependency1.jpg)
+
+    * Resolving Transitive Dependencies
+        * To resolve transitive dependency confusion, there are two options:
+
+        * Directly include the dependency in question. The version you use will become the nearest definition and be selected by Maven.
+        * Use the `<exclusion>` tag to specifically exclude versions you do not wish to use.
+        * For example, this code will exclude the version of JUnit from Mockito, resulting in an included version of `5.7` being selected.
+
+    * ```xml
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        ```
+    
+    * ![transient_dependency](./images/transient_dependency2.jpg)
+
+* Pom Inheritance and Multiple Module Projects
+
+    * Pom Inheritance
+    
+    * Just like all classes in Java inherit from the Object class, all poms in Maven inherit from the Super Pom. The Super Pom contains the default settings used by Maven, and you can override them with settings in your pom. You can see the Super Pom in Maven's documentation.
+
+    * ![pom](./images/pom.png)
+
+    * ![pom2](./images/pom2.png)
+
+    * ![pom3](./images/pom3.png)
+
+    * ![pom4](./images/pom4.png)
+
+    * You can also create an inheritance hierarchy among your own poms. First, you have to define a pom to be used as a parent by specifying the pom `<packaging>` type.
+        * `pom-root` architype
+
+    * ```xml
+        <project>
+            <modelVersion>4.0.0</modelVersion>
+
+            <groupId>com.udacity.jpnd</groupId>
+            <artifactId>maven-test-parent</artifactId>
+            <version>1.0.0</version>
+            <packaging>pom</packaging>
+        </project>
+        ```
+    
+    * Then you create a pom that inherits from that pom using the `<parent>` tag.
+
+    * ```xml
+        <project>
+            <parent>
+                <groupId>com.udacity.jpnd</groupId>
+                <artifactId>maven-test-parent</artifactId>
+                <version>1.0.0</version>  
+            </parent>
+            <groupId>com.udacity.jpnd</groupId>
+            <artifactId>B</artifactId>
+            <version>1.0.0</version>
+        </project>
+        ```
+    
+    * ```xml
+        <project>
+            <parent>
+                <groupId>com.udacity.jpnd</groupId>
+                <artifactId>maven-test-parent</artifactId>
+                <version>1.0.0</version>  
+            </parent>
+            <groupId>com.udacity.jpnd</groupId>
+            <artifactId>C</artifactId>
+            <version>1.0.0</version>
+        </project>
+        ```
+
+    * Multi-Module Projects
+
+    * To create a Maven project containing multiple modules, create a `<modules>` tag at the top level of the pom.
+
+    * ```xml
+        <project>
+            <modelVersion>4.0.0</modelVersion>
+
+            <groupId>com.udacity.jpnd</groupId>
+            <artifactId>maven-test-parent</artifactId>
+            <version>1.0.0</version>
+            <packaging>pom</packaging>
+
+            <modules>
+                <module>B</module>
+                <module>C</module>
+            </modules>
+
+            <dependencies> ... </dependencies>
+        </project>
+        ```
