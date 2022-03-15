@@ -5561,15 +5561,15 @@
         * In Java 8 and later, the JVM uses both of those compilers.
 
 * Interpreter vs. Compilation
-Interpreter:
-  * Parses Bytecode Line-by-Line
-  * Performs the operation requested by each bytecode statement
-  * Starts fast, but runs slower
+    * Interpreter:
+        * Parses Bytecode Line-by-Line
+        * Performs the operation requested by each bytecode statement
+        * Starts fast, but runs slower
 
-* Compilation:
-  * JVM compiles bytecode into machine code in advance
-  * Saves machine code for reuse
-  * Takes longer to start, but runs faster after beginning
+    * Compilation:
+        * JVM compiles bytecode into machine code in advance
+        * Saves machine code for reuse
+        * Takes longer to start, but runs faster after beginning
 
 * Tiered Compilation
   * As of Java 8, the JVM will use two different compilers. The `Client Compiler, or C1`, quickly compiles the bytecode into machine code and lets the application start right away, while the `Server Compiler, or C2`, recompiles the application based on the information from the profiler.
@@ -5597,7 +5597,6 @@ Interpreter:
     * You could also load `JAR` into the JShell by doing `jshell -class-path /path/to/file.jar`
 
 * ![java_history](./images/java_history.png) 
-
 
 ### Dependency Management with Maven
 
@@ -5882,3 +5881,647 @@ Interpreter:
             <dependencies> ... </dependencies>
         </project>
         ```
+
+* Maven Plugins 
+
+    * All Maven goals, even the default behaviors, are performed by plugins. Here are the default bindings for JAR projects. You can see that each phase has a `groupId`, `artifactId`, and `version` preceding an additional string, which is the `name of the goal` that plugin will execute. For examples, in the `<compile>` phase, we execute the goal `compile` of the plugin `maven-compiler-plugin`. That plugin is in the group `org.apache.maven.plugins` and the default version is `3.1`.
+
+    * ```xml    
+        <phases>
+            <process-resources> org.apache.maven.plugins:maven-resources-plugin:2.6:resources </process-resources>
+            <compile> org.apache.maven.plugins:maven-compiler-plugin:3.1:compile </compile>
+            <process-test-resources> org.apache.maven.plugins:maven-resources-plugin:2.6:testResources </process-test-resources>
+            <test-compile> org.apache.maven.plugins:maven-compiler-plugin:3.1:testCompile </test-compile>
+            <test> org.apache.maven.plugins:maven-surefire-plugin:2.12.4:test </test>
+            <package> org.apache.maven.plugins:maven-jar-plugin:2.4:jar </package>
+            <install> org.apache.maven.plugins:maven-install-plugin:2.4:install </install>
+            <deploy> org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy </deploy>
+        </phases>
+        ```
+    
+    * You can find a list of a wide variety of plugins used by Maven on the documentation site: https://maven.apache.org/plugins/index.html
+
+    * Plugin Management vs. Plugins.
+        
+        * You can customize the versions of these plugins in the `<pluginManagement>` element of the build. Changes in that area will affect all children projects as well. If you wish to customize a plugin for this project only, place those changes in the `<plugins>` element instead.
+    
+    * ```xml
+        <build>
+            <plugins>
+                <plugin>
+                ... customization for this project only
+                </plugin>
+            </plugins>
+            <pluginManagement>
+                <plugins>
+                    <plugin>
+                        ... customization for all projects that inherit this as well
+                    </plugin>
+                </plugins>
+            </pluginManagement>
+        ```
+    
+    * Binding Goal to Phase
+        * To bind a plugin goal to a phase, we add an `<execution>` element to the plugin definition. This example binds the `do-blockchain` goal of the plugin called `my-blockchain-plugin` to the `test` phase. Now whenever Maven executes that phase, my goal will be run.
+
+        * ```xml
+            <plugin>
+                <groupId>com.udacity.jpnd</groupId>
+
+                <artifactId>my-blockchain-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>do-blockchain</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            ```
+    
+    * Configuring Plugins
+        * You can pass additional properties to plugins using the `<configuration>` element. We can modify the above to pass in the `<bitcoins>` property to our plugin with the following example:
+
+        * ```xml
+            <plugin>
+                <groupId>com.udacity.jpnd</groupId>
+                <artifactId>my-blockchain-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>do-blockchain</goal>
+                        </goals>
+                        <configuration>
+                            <bitcoins>all</bitcoins>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            ```
+    
+    * You should have added something like the following to the `<build>` tag in your pom.xml.
+
+        * ```xml
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.2.0</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.2.0</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+            ```
+
+* Assigning Properties
+    * In the pom generated by `archetype:generate`, there are two properties set in a `<properties>` block.
+
+    * ```xml
+        <properties>
+            <maven.compiler.source>1.7</maven.compiler.source>
+            <maven.compiler.target>1.7</maven.compiler.target>
+        </properties>
+        ```
+    
+    * These set the value `maven.compiler.source` to 1.7. This value is used by the maven compiler plugin, and you could do the same thing by configuring the plugin directly.
+
+    * ```xml
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.1</version>
+            <configuration>
+                <source>1.7</source>
+                <target>1.7</target>
+            </configuration>
+        </plugin>
+        ```
+    
+    * Changing these values will change the Java version used by the compiler plugin.
+
+    * Creating and Using Properties 
+
+        * You can define your own properties and reference them elsewhere in your pom.
+
+        * ```xml
+            <properties>
+                <some.plugin.version>2.0</some.plugin.version>
+            <properties>
+            ```
+    
+    * The above statement defines a property named `some.plugin.version`. You can now reference it with the same name:
+
+        * ```xml
+            <plugin>
+                <groupId>my.group</groupId>
+                <artifactId>some-plugin</artifactId>
+                <version>${some.plugin.version}</version>
+            </plugin>
+            ```
+    
+    * Automatic Properties
+        * There are 4 other types of properties Maven creates automatically.
+
+        * `Environment variables`: any variables in the shell's environment can be referenced with `${env.VAR_NAME}`, for example `${env.PATH}`.
+        * `POM elements`: Properties in the pom can be referenced according to their place in the object structure. For example, if I wanted to reference the `<project><groupId>value</groupId></project>`, I could use `${project.groupId}`
+        * `Settings.xml`: Users can provide customizations to their maven profile in a file called `settings.xml`. These variables can be referenced with `${settings.propName}`
+        * `Java System properties`: Anything provided by `java.lang.System.getProperties()` can be accessed using `${java.propName}`
+
+* Maven Site
+
+    * Maven Reporting happens during a phase called `site`. This phase is not part of the default JAR lifecycle. That means you must run it manually using the command: `mvn site`
+
+    * The site phase generates documentation about your project. You can customize this behavior by adding additional plugins to the `<reporting>` element at the top level of the `<project>` element in your pom.
+
+    * For example, you can run the JavaDoc plugin during the site phase by adding the following element to your pom:
+
+    * ```xml
+        <reporting>
+            <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.2.0</version>
+            </plugin>
+            </plugins>
+        </reporting>
+        ```
+    
+    * Add SpotBugs to Reporting
+
+        * To add SpotBugs to your `site` phase, add the following to the top level of your `<project>` element.
+
+        * ```xml
+            <reporting>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <version>4.1.4</version>
+                    </plugin>
+                </plugins>
+            </reporting>
+            ```
+    
+    * Run Maven Site
+
+        * Run the site phase with the command: `mvn site`
+    
+    * Check the Report
+        * Open the `target/site/spotbugs.html`. You should see a High Priority error for `HE_EQUALS_USE_HASHCODE`. Clicking on this error will take you to a page describing the message in more detail.
+
+* Maven vs. Gradle
+    * Maven and Gradle are the two main build tools in use today. Maven is still in wider use, but Gradle has many useful features as well. Here is a brief comparison of their features:
+
+    * ![maven_vs_gradle](./images/maven-vs-gradel.jpg)
+
+
+### Java Modules
+
+* Project Jigsaw
+    * Our dependency examples have been simple, but libraries that use other libraries eventually create a very complex dependency chain. Project Jigsaw was the effort to declare dependency relationships in a way that would allow Java to recognize library dependencies and control package-level visibility based on those dependencies. Eventually, the changes implemented by Project Jigsaw were merged into Java 9 and became the Module system.
+
+    * ![modules-benefits](./images/modules-benefits.jpg)
+
+    * Benefits of controlling package visibility and dependency relationship at compile time:
+
+        * Easier for developers to maintain libraries and large applications
+        * Improve the security of the JDK by limiting which packages were exposed
+        * Improve application performance by reducing the size and surface area of java components
+        * Enable the JDK to better scale for use in small devices and cloud deployments
+
+* What is a Module?
+
+    * Modules as Organizational Strategy
+
+    * Java organizes classes using the concept of `Packages`. `Packages` contain `classes` and `class` visibility depends on which package references them.
+
+    * `Modules` perform a similar role for organizing `packages`. Each module contains `packages`, and `package` visibility depends on which `module` references them. In the `module` below, each package contains `two classes`, and the `module` `com.udacity.jpnd.module` contains both `packages`.
+
+    * ![module-organization-packages](./images/module-organization-packages.jpg)
+
+    * Module Content
+
+        * A `Module` is still a `JAR`. `Modules` are just like normal `jars`, in that they contain `classes` in `packages` and use a `MANIFEST.MF` to declare `class metadata`. **They also contain one additional class called a module descriptor**. A `module descriptor` is a **special type of Java class that indicates which packages the module makes available, as well as which modules this module relies on**.
+
+    * Module Descriptor: A Java class that provides information about the `module`. It is stored in a `class` called `module-info.java` and compiles into a `class file called module-info.class`.
+
+* Modules Types
+
+    * Classpath vs. Modulepath
+        * Before modules, building a Java project involved placing all project classes and `jars` on the `CLASSPATH`. This is the path where the compiler looks for all your `class files`.
+
+        * With modules, you place your modules at a different location, called the `MODULEPATH`. This is the path where the compiler looks for all your `modules`. 
+    
+    * Unnamed Module
+
+        * All Java applications compiled in `Java 9+` use the `module system`. Even if they contain no modules and do not use a module descriptor, everything placed on the `CLASSPATH` are placed into what is called the `Unnamed Module`.
+
+        * In the below example, some modules are added to the `MODULEPATH` and some `JAR` is added to the `CLASSPATH`.
+
+        * ![unnamed-module](./images/unnamed-module.jpg)
+
+    * Automatic Modules
+        
+        * `Unnamed Module` cannot access content in `Modules`, because it cannot use the `requires statement`. `Named modules` cannot access the `Unnamed Module`, because the `unnamed module` cannot be referenced by `require`.
+
+        * The solution to this problem is `automatic modules`. `Automatic modules` are created by placing `non-modular jars` on the `modulepath`. If your project has dependencies, they can be placed on the `modulepath` so that they become `automatic modules` which you can reference by name in your `module descriptor`. The default name of `automatic modules` is the name of the `jar`, but that name can be overridden by the `Automatic-Module-Name` property in the `JAR Manifest`. You can then reference the module using `requires`.
+
+        * ![automatic-module](./images/automatic-module.jpg)
+    
+    * Module Access
+
+        * `Automatic modules` can access everything in the `unnamed module`. Maven places transitive dependencies on the `classpath`, so they become part of the `unnamed module`. The direct dependencies are placed on the `modulepath` and become `automatic modules`. This allows your `module` to access the direct dependencies, but not the transitive dependencies.
+
+        * ![module-access](./images/module-access.png)
+
+        * ![modules](./images/modules.png)
+
+        * ![modules2](./images/modules2.png)
+
+    * Example Modules
+
+        * ```java
+            module com.udacity.flight {
+                exports com.udacity.flight.search;
+                exports com.udacity.flight.model;
+            }
+
+            module com.udacity.hotel {
+                exports com.udacity.hotel.search;
+                exports com.udacity.hotel.model;
+                opens com.udacity.hotel.model to com.udacity.packagesearch;
+            }
+
+            module com.udacity.packagesearch {
+                requires com.udacity.flight;
+                requires com.udacity.hotel;
+            }
+            ```
+* JLink
+
+    * `JLink` is a tool that allows us to create a custom `Java Runtime Environment` containing the minimal components necessary to **run a specific Java module**. This command line tool is part of the `JDK`, so you can run it by simply typing `jlink` from any command prompt that has the Java `/bin` directory on the path.
+
+    * Using JLink
+
+        * `JLink` only works on `modules`. We'll demonstrate its use on a simple example.
+        * The reason why it only works with `modules` is related to the fact that `modules` inform us about the necessary libraries a `module` needs. That enables us to create a `JAR` with a `JRE` with just the necessary `libs` needed by app.
+
+    * `App.java`
+
+        * ```java
+            import java.math.BigInteger;
+            import java.util.Set;
+            public class App 
+            {
+                public static void main( String[] args )
+                {
+                    Set<Integer> newSet = Set.of(1,2,3,4);
+                    int unnecessarilyComplexSum = newSet.stream()
+                            .map(BigInteger::valueOf)
+                            .reduce(BigInteger.ZERO,(a, b) -> a.add(b)).intValue();
+                    System.out.println( "Hello " + unnecessarilyComplexSum );
+                }
+            }
+            ```
+    
+    * `module-info.java`
+
+        * ```java
+            module com.udacity.jpnd.moduletest {}
+            ```
+    
+    * Analyze dependencies
+
+        * The first step to using `JLink` is to make sure that all your dependencies can be resolved. The `JDK` includes a tool for this called `jdeps`. After building the above into a `jar`, we can run `jdeps` on the jar: `jdeps Example.jar`
+
+        * This shows us all the dependencies required by the program and where they are located.
+
+        * ```java
+            requires mandated java.base (@14.0.1)
+            com.udacity.jpnd.moduletest -> java.base
+            com.udacity.jpnd                                   -> java.io                                            java.base
+            com.udacity.jpnd                                   -> java.lang                                          java.base
+            com.udacity.jpnd                                   -> java.lang.invoke                                   java.base
+            com.udacity.jpnd                                   -> java.math                                          java.base
+            com.udacity.jpnd                                   -> java.util                                          java.base
+            com.udacity.jpnd                                   -> java.util.function                                 java.base
+            com.udacity.jpnd                                   -> java.util.stream                                   java.base
+            ```
+        
+        * Because all our dependencies are part of `java.base` we can go ahead and begin linking. If your program has additional dependencies, you can use jdeps to determine whether you need to manually include additional packages in your jar.
+    
+    * Building Runtime
+
+        * To run JLink, we must put all the required modules on the modulepath. In this case, that includes the module for our program as well as java.base. Then we use the `--add-modules` flag to specify which module to add to our JRE, and lastly we provide an output directory. The modules comprising the Java Standard Library can be found in the `/jmods` directory of your Java install.
+
+        * `jlink --module-path "$JAVA_HOME/jmods" --module-path target/classes --add-modules com.udacity.jpnd.moduletest --output tinyJRE`
+
+            * `target/classes` contains the compiled `.class` files of our app.
+
+    * Using the Runtime
+
+        * The new `tinyJRE` directory is less than 40 MB and contains a complete Java Runtime that can run our program.
+
+        * `tinyJRE/bin/java.exe -jar Example.jar`
+
+        * Resolving dependencies for projects that include non-modular dependencies can be challenging and is not covered by this introduction, but there are some Maven plugins that can assist, such as the `Maven JDeps Plugin` and the `Moditect plugin`.
+    
+    * Additional Resources
+        * Building minimal JREs from larger projects can be complex. Here are some additional resources if you need to learn more about this topic.
+            * [The `jdeps` Command](https://docs.oracle.com/en/java/javase/15/docs/specs/man/jdeps.html)
+            * [The `jlink` Command](https://docs.oracle.com/en/java/javase/15/docs/specs/man/jlink.html)
+            * [Apache Maven JDeps Plugin](https://maven.apache.org/plugins/maven-jdeps-plugin/)
+            * [Moditect](https://github.com/moditect/moditect)
+
+* Migration to Java 9 Modules
+
+    * Should You Upgrade
+        * You don't need to upgrade to modules just to use a newer version of Java. **All versions work without a `module-info.java`**.
+
+        * When to **Avoid** Modules:
+            * Many Legacy Dependencies
+            * Infrequent Change
+            * Not Shared
+        
+        * When to **Use** Modules:
+            * New Projects
+            * Application Used By Other Applications
+            * Hide Internal Methods and Data Types
+
+        * Preparing To Upgrade
+            * Review Test Coverage
+            * Upgrade Tooling
+                * IntelliJ 2018.2+
+                * Maven 3.5.0+
+                * maven-compiler-plugin 3.8.0+
+                * maven-surefire-plugin 2.22.0+
+            * Update Dependencies
+    
+    * Update Language Level
+
+        * Download the target JDK and update the `pom.xml`. For example:
+
+        * ```xml
+            <properties>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <maven.compiler.source>14</maven.compiler.source>
+                <maven.compiler.target>14</maven.compiler.target>
+            </properties>
+            ```
+    
+    * Resolve Duplicate Packages
+
+        * Placing multiple projects with the same `package` on the `classpath` is not a problem, because the packages simply combine. You **cannot** place `packages` with the same name on the `Module path`, however. If you have different projects that share a `package` name, you will need to **refactor one of them to use a different `package` name**.
+
+        * ![duplicate-package](./images/duplicate-package.jpg)
+    
+    * Create `module-info.java`
+        * Create a minimal `module-info.java` in the `src/main/java` directory containing only your `new module name`.
+        * Resolve errors in `IntelliJ`. You should be able to mouseover or use the "quick fix" key bind to automatically **add missing requires, exports, and opens statements.**
+        * Build the project with maven using `mvn package`
+    
+    * What Can Go Wrong?
+
+        * Common Problems
+            * Most of the problems with `Modules` revolve around the relationship between dependencies and `transitive dependencies` in which one or both are non-modular projects.
+
+        * Dependencies Use Reflection
+            * If dependencies access your class via reflection, you may not notice until you run the project.
+            * `Unable to make public com.udacity.jpnd.Foo() accessible: module com.udacity.jpnd does not "exports com.udacity.jpnd" to module com.other.module`
+                * Module `com.other.module` is trying to access `com.udacity.jpnd`.
+                * Resolve by exporting or opening the required package.
+
+    * Modular Transitive Dependencies of non-modular Dependencies
+
+        * If your `non-modular` dependencies reference transitive dependencies that are modular, those dependencies will become modules and be **inaccessible to your module unless you explicitely require them.**
+        
+        * ![modular-transitive-dependencies](./images/modular-transitive-dependencies.jpg)
+
+        * This issue may not be apparent until you run the program and you receive a `NoClassDefFoundError` when the engine module tries to execute some method from piston and can't find it.
+
+        * You may encounter this error in the final project when including Amazon SDK dependencies:
+
+        * https://github.com/aws/aws-sdk-java-v2/issues/1869
+    
+    * Reflection Access to Non-Modules
+
+        * You cannot open your module to the Unnamed Module. If a transitive dependency requires reflection access to your module, it will be unable to access that package unless you fully open the package to everyone.
+
+        * This occurs in some Test frameworks that use reflection libraries as transitive dependencies. One solution for this case is to limit the scope in which you open your package by only opening the module during the execution of the testing plugin.
+
+        * ```xml
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <configuration>
+                    <argLine>
+                    --add-opens com.udacity.jpnd.mymodule/com.udacity.jpnd.mypackage=ALL-UNNAMED
+                    </argLine>
+                </configuration>
+            </plugin>
+            ```
+    
+    * Libraries Removed from JDK
+        * Some libraries are not exposed by the core JDK as modules. If you relied on one of the JDK internal libraries in the `javax` or `com.sun` packages, you may encounter `ClassNotFoundException` trying to access those classes. You can check for these classes using:
+
+        * `jdeps -jdkinternals pathToClasses`
+    
+    * Migration Guides
+        * It's hard to address all possible issues, so definitely consult some migration guides such as:
+
+        * https://docs.oracle.com/en/java/javase/11/migrate/index.html
+
+* Example
+
+    * reservation-system
+
+        * ```xml
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project xmlns="http://maven.apache.org/POM/4.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                <modelVersion>4.0.0</modelVersion>
+
+                <groupId>com.udacity.jpnd</groupId>
+                <artifactId>reservation-system</artifactId>
+                <version>1.0-SNAPSHOT</version>
+
+                <packaging>pom</packaging>
+                <name>Reservation system</name>
+
+                <properties>
+                    <maven.compiler.source>11</maven.compiler.source>
+                    <maven.compiler.target>11</maven.compiler.target>
+                </properties>
+
+                <modules>
+                    <module>flightmodule</module>
+                    <module>hotelmodule</module>
+                    <module>packagemodule</module>
+                </modules>
+
+                <build>
+                    <pluginManagement>
+                        <plugins>
+                            <plugin>
+                                <artifactId>maven-compiler-plugin</artifactId>
+                                <version>3.8.1</version>
+                            </plugin>
+                        </plugins>
+                    </pluginManagement>
+                </build>
+            </project>
+            ```
+    
+    * flightmodule
+        * ```xml
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project xmlns="http://maven.apache.org/POM/4.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                <modelVersion>4.0.0</modelVersion>
+
+                <parent>
+                    <groupId>com.udacity.jpnd</groupId>
+                    <artifactId>reservation-system</artifactId>
+                    <version>1.0-SNAPSHOT</version>
+                </parent>
+
+                <artifactId>flightmodule</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <packaging>jar</packaging>
+                <name>flightmodule</name>
+            </project>
+            ```
+
+    * hotelmodule
+        * ```xml
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project xmlns="http://maven.apache.org/POM/4.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                <modelVersion>4.0.0</modelVersion>
+
+                <parent>
+                    <groupId>com.udacity.jpnd</groupId>
+                    <artifactId>reservation-system</artifactId>
+                    <version>1.0-SNAPSHOT</version>
+                </parent>
+
+                <artifactId>hotelmodule</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <packaging>jar</packaging>
+                <name>hotelmodule</name>
+            </project>
+            ```
+    
+    * packagemodule
+        * ```xml
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project xmlns="http://maven.apache.org/POM/4.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                <modelVersion>4.0.0</modelVersion>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.udacity.jpnd</groupId>
+                        <artifactId>hotelmodule</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <scope>compile</scope>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.udacity.jpnd</groupId>
+                        <artifactId>flightmodule</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                        <scope>compile</scope>
+                    </dependency>
+                </dependencies>
+
+                <parent>
+                    <groupId>com.udacity.jpnd</groupId>
+                    <artifactId>reservation-system</artifactId>
+                    <version>1.0-SNAPSHOT</version>
+                </parent>
+
+                <artifactId>packagemodule</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <packaging>jar</packaging>
+                <name>packagemodule</name>
+
+                <build>
+                    <pluginManagement>
+                        <plugins>
+                            <plugin>
+                                <groupId>org.apache.maven.plugins</groupId>
+                                <artifactId>maven-jar-plugin</artifactId>
+                                <version>3.2.0</version>
+                                <configuration>
+                                    <archive>
+                                        <manifest>
+                                            <addClasspath>true</addClasspath>
+                                            <classpathPrefix>lib/</classpathPrefix>
+                                            <mainClass>com.udacity.packagesearch.search.Main</mainClass>
+                                        </manifest>
+                                    </archive>
+                                </configuration>
+                            </plugin>
+                        </plugins>
+                    </pluginManagement>
+                </build>
+
+            </project>
+            ```
+    
+    * Module Descriptors
+
+        * flightmodule
+
+            * ```java
+                module com.udacity.flight {
+                    exports com.udacity.flight.search;
+                    exports com.udacity.flight.model;
+                }
+                ```
+        
+        * hotelmodule
+
+            * ```java
+                module com.udacity.hotel {
+                    exports com.udacity.hotel.search;
+                    exports com.udacity.hotel.model;
+                    opens com.udacity.hotel.model;
+                }
+                ```
+
+        * packagemodule
+
+            * ```java
+                module com.udacity.packagesearch {
+                    requires com.udacity.flight;
+                    requires com.udacity.hotel;
+                }
+                ```
