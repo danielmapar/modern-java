@@ -6098,7 +6098,6 @@
 
     * ![maven_vs_gradle](./images/maven-vs-gradel.jpg)
 
-
 ### Java Modules
 
 * Project Jigsaw
@@ -6525,3 +6524,45 @@
                     requires com.udacity.hotel;
                 }
                 ```
+
+### Unit Testing With Java
+
+* Unit Testing
+
+    * Testing is important because programming is hard, and because debugging programs is harder. Good unit tests:
+
+        * Let you know if you broke something.
+        * Make it clear what the program is supposed to do.
+    
+    * **Unit Test**: A piece of code that verifies the one behavior of another piece of code.
+
+        * Each behavior your application performs should have its own unit test.
+        * Each unit test should verify one behavior.
+
+    * `App.java`
+
+        * ```java
+            public class App {
+                public int addTwoNumbers(int x, int y) { 
+                    return x + y; 
+                }
+            }
+            ```
+        
+        * This method adds two numbers together. To test that method does what it's supposed to do, you could write a method like this:
+
+        * ```java
+            public void testAddTwoNumbers() {
+                    int input1 = 5;
+                    int input2 = 6;
+                    int expected = 11;
+                    int result = addTwoNumbers(input1, input2);
+                    if(expected != result) {
+                        throw new RuntimeException(String.format(
+                            "addTwoNumbers expected %d but returned %d for inputs %d, %d",
+                            expected, result, input1, input2));
+                    } else {
+                        System.out.println("addTwoNumbers Pass");
+                    }
+            }
+            ```
