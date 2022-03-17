@@ -6566,3 +6566,493 @@
                     }
             }
             ```
+
+* Unit Testing Frameworks
+
+    * The previous manual test had many flaws:
+
+        * Only tests one scenario
+        * No boundary checking
+        * Throws an exception that would interrupt other tests
+        * Must be manually executed
+    * Unit Testing Frameworks are designed to solve some of these problems.
+
+* JUnit
+
+    * JUnit is the main testing framework for Java. It provides tools for writing unit tests and automatically executing them. It has built-in support from Maven and IDEs like IntelliJ.
+
+    * Adding JUnit as a Maven Dependency
+    
+    * Adding JUnit to your project is as easy as including the dependency. Your Maven quickstart project probably included a JUnit 4 dependency, but we will be using this one.
+
+    * ```xml
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        ```
+    
+    * You can also find the latest dependency information at https://junit.org
+
+    * Creating a Test Class
+    * `Test Class`: Class containing all the unit tests for a corresponding application class.
+        * Location: `src/test/java`
+        * Package: The same as your application class.
+    * For example:
+        * Application Class: `src/main/java/com.udacity.jpnd.App`
+        * Test Class: `src/test/java/com.udacity.jpnd.AppTest`
+
+* Writing Unit Tests with JUnit
+
+
+    * Identifying Test Methods
+    
+    * Once you have a test class, you can mark methods in that class as tests by using the `@Test` annotation.
+
+    * ```java
+        @Test
+        public void myUnitTest() {
+            //tada! (always passes)
+        }
+        ```
+    
+    * Using Assertions
+    * Unit tests always pass unless something causes them to fail. An uncaught exception will cause tests to fail, but JUnit provides the `Assertions` class to cause conditional test failure. You can use `Assertions.assertEquals` to rewrite the earlier test method.
+
+    * ```java
+        @Test
+        public void addTwoNumbers_fiveAndSix_returnsEleven() {
+            int input1 = 5;
+            int input2 = 6;
+            int expected = 11;
+            App app = new App();
+            Assertions.assertEquals(expected, app.addTwoNumbers(input1, 
+                input2), "5 + 6 should always equal 11");
+        }
+        ```
+    
+    * Types of Assertions
+        * `assertEquals(expected, actual)` / `assertNotEquals` - Fails if the expected an actual values don't match. Available for all primitive data types, as well as Object.
+        * `assertArrayEquals(expected, actual)` - Fails if any element of the two arrays are not equal. Available for all primitive arrays as well as Object[].
+        * `assertIterableEquals(expected, actual)` - Like ArrayEquals, but for Iterable collections
+        * `assertTrue(condition)` / `assertFalse` - Fails if condition doesn't match what method expects.
+        * `assertNull(object)` / `assertNotNull` - Fails if object null status does not match what method expects.
+        * `assertThrows(Class exceptionType, executable)` / `assertDoesNotThrow` - Runs the executable and fails if the provided exception type is not thrown
+        * `assertAll(Executable... executables)` - Runs all the executables and fails if any of the executables fail
+        * `fail` - Always fails
+    
+    * Using `assertAll`
+        * Each test aborts as soon as any assertion fails, but if you wish to make sure multiple conditions are checked within the same unit test, you can use the assertAll method. This test verifies that all three properties match, and the report on this test will indicate all properties that do not match instead of failing in the middle.
+
+        * ```java
+            @Test
+            public void getCat_returnsBeigeSonicAge10(){
+                Cat cat = catTest.getCat();
+                assertAll("This Message Will Print In The Test Report",
+                        () -> assertEquals("Sonic", cat.getName()),
+                        () -> assertEquals(Color.BEIGE, cat.getColor()),
+                        () -> assertEquals(10, cat.getAge())
+                );
+            }
+            ```
+
+    * Naming Unit Tests
+
+        * Test Naming Conventions
+        
+        * There are many different test naming conventions. For this course, our recommendations are:
+
+            * Don't use the worst 'test' in the name.
+            * Start the test name with the method or scenario under test.
+            * Include the condition you're testing.
+            * End with the expected result.
+            * Separate each name fragment with underscores.
+    
+    * DisplayName
+
+        * You can override the displayed test name using the `@DisplayName` annotation. This allows special characters and spaces, so you can write more readable test names.
+
+        * ```java
+            @Test
+            @DisplayName("Verify 5+6 = 11 \uD83D\uDE2C")
+            public void addTwoNumbers_fiveAndSix_returnsEleven() {
+                int input1 = 7;
+                int input2 = 6;
+                int expected = 11;
+                App app = new App();
+                Assertions.assertEquals(expected, app.addTwoNumbers(input1, input2), "5 + 6 should always equal 11");
+            }
+            ```
+
+* Writing a Unit Test
+
+    * You should have created a class called `TotalsCalculatorTest` in the `com.udacity.cart.service` package of the `src/test/java` directory. Aside from the awkward design of the class under test, this test is fairly simple. We create a new `TotalsCalculator`, populate a list of `CartItems`, and then use the calculator to return a `CartTotals`. Then we use `assertAll` to execute two different `assertEquals` methods on the subtotal and taxes. Note that the `assertEquals(double)` method takes an additional parameter specifying the acceptable variance, because doubles are floating point numbers that will rarely be 100% equal.
+
+    * ```java
+        public class TotalsCalculatorTest {
+
+            @Test
+            public void getTotals_givenMultipleItems_sumsPriceAndTax() {
+                // Arrange
+                TotalsCalculator totalsCalculator = new TotalsCalculator();
+
+                List<CartItem> itemList = List.of(
+                    new CartItem("Soda", 3.00, 0.50),
+                    new CartItem("Small peperoni pizza", 6.00, 0.60),
+                    new CartItem("Fries", 2.00, 0.10)
+                );
+
+                // Act
+                CartTotals totals = totalsCalculator.getTotals(itemList);
+
+                // Assert
+                assertAll("Totals match",
+                    () -> assertEquals(11.0, totals.getSubtotal(), 0.001),
+                    () -> assertEquals(1.2, totals.getTaxes(), 0.001)
+                );
+            }
+        }
+        ```
+
+* Parameterized Tests
+    * You can expand your test coverage by using the `@ParameterizedTest` annotation to rerun the same test with different input parameters multiple times. This annotation is used in combination with an `ArgumentsSource`. The below example uses a `@ValueSource` to pass in individual values.
+
+    * ```java
+        @ParameterizedTest
+        @ValueSource(ints = {1, 5, 100, 1000, 100000})
+        public void addTwoNumbers_addSix_returnsNumberPlusSix(int number) {
+            int input1 = 6;
+            int expected = number + 6;
+            App app = new App();
+            Assertions.assertEquals(expected, app.addTwoNumbers(number, input1));
+        }
+        ```
+
+* CsvSource
+
+    * You can provide multiple values at once using a `@CsvSource`, which accepts a list of `Strings` containing comma-delimited values. It will automatically attempt to parse this list and cast the values to primitive types.
+
+    * ```java
+        @ParameterizedTest(name = "[{index}] {0} + {1} = {2}")
+        @DisplayName("Add 6 to normal numbers \uD83D\uDC04")
+        @CsvSource({
+                "6, 5, 11",
+                "6, 1, 7",
+                "6, 100, 106",
+                "6, 1000, 1006",
+                "6, 100000, 100006"
+        })
+        public void addTwoNumbers_addSix_returnsNumberPlusSix(int input1, int input2, int expected) {
+            App app = new App();
+            Assertions.assertEquals(expected, app.addTwoNumbers(input1, input2));
+        }
+        ```
+
+* MethodSource
+
+    * You can also create an `ArgumentsSource` programmatically, using the annotation `@MethodSource`, which takes a single `String` parameter specifying the name of the method that should be used to provide `Arguments`.
+
+    * `@MethodSource("fancyArgumentProvider")`
+
+    *  For example, the above annotation would tell a `@ParameterizedTest` to use this method to provide its arguments:
+
+    * ```java
+        private static Stream<Arguments> fancyArgumentProvider() {
+            return Stream.of(
+                    Arguments.of(6, 5, 11),
+                    Arguments.of(6, 1, 7)
+            );
+        }
+        ```
+
+* EnumSource
+
+    * Another kind of `MethodSource` iterates over all the members of an enum and passes them as an input parameter to your test.
+
+    * ```java
+        enum SomeNumber {
+            ONE(1), FIVE(5), ONE_HUNDRED(100);
+            int number;
+            SomeNumber(int number) { this.number = number; }
+            public int getNumber() { return this.number;}
+        }
+
+        @ParameterizedTest
+        @EnumSource(SomeNumber.class)
+        public void addTwoNumbers_addSixEnum_returnsValuePlusSix(SomeNumber num) {
+            App app = new App();
+            int expected = switch(num) {
+                case ONE -> 7;
+                case FIVE -> 11;
+                case ONE_HUNDRED -> 106;
+                default -> 0;
+            };
+            Assertions.assertEquals(expected, app.addTwoNumbers(6, num.getNumber()));
+        }
+        ```
+
+* Repeated Tests
+
+    * Repeated Test Annotation
+
+        * To rerun the same test multiple times, you can use the `@RepeatedTest` annotation. It takes a single parameter specifying the number of iterations, and allows you to pass an optional parameter to your test method called `RepetitionInfo`.
+    
+    * For example, this method tests the numbers 1-10.
+
+    * ```java
+        @RepeatedTest(10)
+        public void addTwoNumbers_addSix_returnsValuePlusSix(RepetitionInfo repetitionInfo) {
+            int input1 = repetitionInfo.getCurrentRepetition();
+            int input2 = 6;
+            int expected = 6 + input1;
+            App app = new App();
+            Assertions.assertEquals(expected, app.addTwoNumbers(input1, input2));
+        }
+        ```
+    
+    * You might use `@RepeatedTest` to:
+
+        * Verify actions can be executed multiple times with the same result
+        * Identify infrequent errors
+        * Informal performance evaluation
+
+* Unit Test Lifecycle
+
+    * JUnit Lifecycle Stages
+
+    * If your tests all share similar repeated steps, such as constructing an object or populating certain test data, it can be useful to perform those steps outside the individual unit tests. JUnit takes the following steps for each test class:
+
+        * Construct the class
+        * Run any methods annotated with `@BeforeAll`
+        * For each test:
+            * Run any methods annotated with `@BeforeEach`
+            * Run the test method
+            * Run any methods annotated with `@AfterEach`
+        * Run any methods annotated with `@AfterAll`
+
+    * You can use the above annotations to identify methods that should run during the testing process. For example, I could modify my `AppTest` to construct a `new App` instance for each unit test. This helps make the unit tests even shorter and focus on the specific behavior they're trying to test.
+
+    * ```java
+        public class AppTest {
+            //Object under test
+            private App app;
+
+            @BeforeEach
+            void init() {
+                this.app = new App();
+            }
+
+            @ParameterizedTest(name = "[{index}] {0} + {1} = {2}")
+            @DisplayName("Add 6 to normal numbers \uD83D\uDE3B")
+            @CsvSource({
+                    "6, 5, 11",
+                    "6, 1, 7",
+                    "6, 100, 106",
+                    "6, 1000, 1006",
+                    "6, 100000, 100006"
+            })
+            public void addTwoNumbersSlimmer_addSix_returnsNumberPlusSix(int input1, int input2, int expected) {
+                Assertions.assertEquals(expected, app.addTwoNumbers(input1, input2));
+            }
+        }
+        ```
+
+* Sample Solution Class
+
+    * This isn't something you would normally use `@BeforeAll` to do, but it is a demonstration of how the annotation interacts with the unit test lifecycle. Here is a sample solution class:
+
+    * `TotalsWithDiscountCalculatorTest.java`
+
+    * ```java
+        import com.udacity.cart.model.CartItem;
+        import com.udacity.cart.model.CartTotals;
+        import com.udacity.cart.model.User;
+        import com.udacity.cart.model.UserType;
+        import org.junit.jupiter.api.BeforeAll;
+        import org.junit.jupiter.api.BeforeEach;
+        import org.junit.jupiter.api.RepeatedTest;
+        import org.junit.jupiter.api.RepetitionInfo;
+        import org.junit.jupiter.params.ParameterizedTest;
+        import org.junit.jupiter.params.provider.Arguments;
+        import org.junit.jupiter.params.provider.MethodSource;
+
+        import java.util.List;
+        import java.util.stream.Stream;
+
+        import static org.junit.jupiter.api.Assertions.*;
+
+        class TotalsWithDiscountCalculatorTest {
+
+            static User globalUser;
+            TotalsWithDiscountCalculator totalsWithDiscountCalculator;
+
+            @BeforeAll
+            static void setupGlobalUser() {
+                System.out.println("Setting up a global User");
+                globalUser = new User("Global User", UserType.REGULAR, 100.00);
+            }
+
+            @BeforeEach
+            void setupCalculator() {
+                System.out.println("Setting up a new calculator");
+                totalsWithDiscountCalculator = new TotalsWithDiscountCalculator(globalUser);
+            }
+
+            @RepeatedTest(3)
+            void getTotalsWithDiscounts_userWithCredit_chargedMultipleTimes(RepetitionInfo repetitionInfo) {
+                totalsWithDiscountCalculator.getTotals(List.of(new CartItem("Twenty dollar item", 20.0, 0)));
+                assertEquals(100.0 - 20 * repetitionInfo.getCurrentRepetition(), globalUser.getCredit());
+            }
+
+
+            @ParameterizedTest
+            @MethodSource("differentUserTypesAndExpectedTotals")
+            void getTotalsWithDiscounts_regularAndPlatinumUser_returnsDifferentSubtotal(User user, CartTotals expectedCartTotals) {
+                TotalsWithDiscountCalculator calculator = new TotalsWithDiscountCalculator(user);
+
+                CartTotals totals = calculator.getTotals(List.of(new CartItem("Ten dollar item", 10.0, 1.0)));
+
+                assertEquals(expectedCartTotals, totals);
+
+            }
+
+            private static Stream<Arguments> differentUserTypesAndExpectedTotals() {
+                return Stream.of(
+                    Arguments.of(
+                        new User("Regular User", UserType.REGULAR, 0.0),
+                        new CartTotals(10.0, 1.0)
+                    ),
+                    Arguments.of(
+                        new User("Platinum User", UserType.PLATINUM, 0.0),
+                        new CartTotals(9.0, 1.0)
+                    )
+                );
+            }
+        }
+        ```
+
+* Unit Test Tips:
+    * Short - Simple unit tests that verify a single, concrete requirement.
+    * Names - Clear names that are communicate the requirement they test.
+    * Success and Failure - In addition to testing for expected results, test for failures and invalid states.
+    * Speed - Tests should run quickly, because they should run often. Slow tests often indicate problem code.
+    * Minimize Pre-conditions - Don't overuse @BeforeEach to do things that are not relevant to every test. This makes your tests slower and obscures the requirements.
+    * Thorough - Test all branching conditions.
+
+* Testing the Tests
+
+    * Tests find bugs in our application, but what finds bugs in our tests? **Code Coverage** is one tool for helping to evaluate your tests for problems. It measures what percentage of your application is executed by unit tests. You can run tests for code coverage in IntelliJ by right-clicking on a test method or class and selecting **Run With Coverage**.
+
+    * Example Class and Test
+    
+    * Given the below class and test methods, code coverage would identify which lines of the class were not tested.
+
+    * `FizzBuzzService.java`
+
+    * ```java
+        public class FizzBuzzService {
+
+            /**
+            * Returns "Fizz" for multiples of 3, "Buzz" for multiples of 5,
+            * and "FizzBuzz" for multiples of 3 and 5.
+            * @param i
+            * @return
+            */
+            public String fizzBuzz(int i) {
+                if(i % 15 == 0) {
+                    return "FizzBuzz";
+                } else if (i % 3 == 0) {
+                    return "Fizz";
+                } else if (i % 5 == 0) {
+                    return "Buzz";
+                } else {
+                    return "" + i;
+                }
+            }
+        }
+        ```
+    
+    * `FizzBuzzServiceTest.java`
+
+    * ```java
+        class FizzBuzzServiceTest {
+
+            private FizzBuzzService fizzBuzzService;
+
+            @BeforeEach
+            void init() {
+                fizzBuzzService = new FizzBuzzService();
+            }
+
+            @ParameterizedTest
+            @ValueSource(ints={3,6,9,33})
+            public void fizzBuzz_multipleThreeNotFive_returnsFizz(int n) {
+                assertEquals("Fizz", fizzBuzzService.fizzBuzz(n));
+            }
+
+            @ParameterizedTest
+            @ValueSource(ints={5,10,20,55})
+            public void fizzBuzz_multipleFiveNotThree_returnsBuzz(int n) {
+                assertEquals("Buzz", fizzBuzzService.fizzBuzz(n));
+            }
+
+            @ParameterizedTest
+            @ValueSource(ints={15,225,3375})
+            public void fizzBuzz_multipleThreeAndFive_returnsFizzBuzz(int n) {
+                assertEquals("FizzBuzz", fizzBuzzService.fizzBuzz(n));
+            }
+        }
+        ```
+    
+    * If you run the above test for coverage, you will identify that one line of the `FizzBuzzService` was not tested.
+
+    * `return "" + i;`
+
+    * That's because we never tested numbers that are not multiples of 3 or 5. By adding an additional test, we would receive 100% coverage.
+
+    * ```java
+        @ParameterizedTest
+        @ValueSource(ints={1,2,41,43})
+        public void fizzBuzz_notMultipleOfThreeOrFive_returnsNumber(int n) {
+            assertEquals(Integer.toString(n), fizzBuzzService.fizzBuzz(n));
+        }
+        ```
+    
+    * How Much Coverage
+        * Code coverage is simply a tool to help you find flaws in your tests. Some methods do not require tests, such as accessor methods (getters/setters) or default constructors. Writing unnecessary tests adds noise and slows down your test suite, so an arbitrary coverage goal is counterproductive. Use coverage to help you make sure your requirements are tested.
+    
+    * `TotalsWithDiscountCalculatorTest`
+
+        * Code coverage reveals that we have no unit tests checking the scenario when a user runs out of credit. We need to write a new unit test to handle this scenario:
+
+        * ```java
+            @Test
+            void getTotalsWithDiscounts_userWithCredit_creditLessThanSubtotal() {
+                TotalsWithDiscountCalculator calculator = new TotalsWithDiscountCalculator(new User("User with a lot of credit", UserType.REGULAR, 15.0));
+                CartTotals totals = calculator.getTotals(List.of(new CartItem("Twenty dollar item", 20.0, 0)));
+                assertEquals(new CartTotals(5.0, 0), totals);
+            }
+            ```
+        * Note that you could also accomplish this by modifying your `ArgumentsSource` method, but that would involve adding additional requirements into our test for regular vs. platinum users. Keeping with our goal to keep simple tests that test specific requirements, it is better to write a new test than overload the existing test.
+
+* Tests in Maven
+
+    * Unit Testing Saves Time
+        
+        * Studies by the National Institute of Standards and Technology as well as by IBM have attempted to assess the cost of fixing bugs depending on where they are discovered during the implementation process. In both cases, the cost of defects was dramatically higher the later in the process they are discovered.
+
+        * ![test-save-time](./images/test-save-time.png)
+
+        * ![test-save-time2](./images/test-save-time2.png)
+    
+    * [NIST report (pdf)](https://www.nist.gov/document/report02-3pdf)
+    
+    * [IBM - Integrating Software Assurance into the SDLC](https://www.researchgate.net/publication/255965523_Integrating_Software_Assurance_into_the_Software_Development_Life_Cycle_SDLC)
+
+    * Unit Tests in Maven
+    
+    * As we learned in Maven unit, our tests will run whenever any phases later than the test phase are reached, which means any time the project is compiled or packaged. Additionally, you can add the results of your unit tests to the site report generated by `mvn site`. This is accomplished by adding the **surefire-report** plugin to your `<reports>` tag in your `pom.xml`.
+
+### Test Doubles, Mocking, and Integration Testing
