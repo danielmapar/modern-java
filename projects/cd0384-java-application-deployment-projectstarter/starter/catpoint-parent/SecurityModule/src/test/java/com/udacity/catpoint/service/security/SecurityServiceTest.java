@@ -167,6 +167,14 @@ public class SecurityServiceTest {
     /* Extra unit tests for complete class coverage */
 
     @Test
+    void whenAlarmIsActive_setAlarmToPending() {
+        when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.DISARMED);
+        when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.ALARM);
+        securityService.changeSensorActivationStatus(sensor, null);
+        verify(securityRepository, atLeastOnce()).setAlarmStatus(AlarmStatus.PENDING_ALARM);
+    }
+
+    @Test
     void addStatusListener() {
         securityService.addStatusListener(statusListener);
     }
