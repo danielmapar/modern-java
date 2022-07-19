@@ -1129,6 +1129,12 @@
         }
         ```
 
+        * The `map` operation takes a `Function`, which is called for each value in the input stream and produces one result value, which is sent to the output stream.
+
+        * The `flatMap` operation takes a function that conceptually wants to consume one value and produce an **arbitrary number of values**. However, in Java, it's cumbersome for a method to return an arbitrary number of values, since methods can return only `zero or one value`. One could imagine an API where the mapper function for `flatMap` takes a value and returns an `array` or a `List` of values, which are then sent to the output. Given that this is the streams library, a particularly apt way to represent an arbitrary number of return values is for the mapper function itself to return a `stream`! The values from the stream returned by the mapper are drained from the stream and are passed to the output stream. **The "clumps" of values returned by each call to the mapper function are not distinguished** at all in the output stream, thus the output is said to have been "flattened."
+
+        * Typical use is for the mapper function of flatMap to return Stream.empty() if it wants to send zero values, or something like Stream.of(a, b, c) if it wants to return several values. But of course any stream can be returned.
+
         * or
 
         * ```java
@@ -4032,7 +4038,7 @@
     
     * ![annotations](./images/annotations.png)
 
-    * In the demo, the @Override annotation helped the Java compiler identify a bug at compile-time that was otherwise pretty tricky to find at runtime.
+    * In the demo, the `@Override` annotation helped the Java compiler identify a bug at compile-time that was otherwise pretty tricky to find at runtime.
 
     * With the bug:
 
