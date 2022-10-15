@@ -4467,7 +4467,7 @@
         * The Java launcher, or the java command, starts up the Java Virtual Machine, and loads the bytecode to execute the program.
     
     * Class bytecode is stored in files, such as `.class` files, `.jar` files, or `.zip` files. The Java launcher needs to find these files. Here are the different ways the Java launcher looks for them:
-        * Looks in the lhe local file system for the Java Runtime Installation, which contains `Bootstrap Classes`, like `java.lang.Object` and `java.lang.String`. The location of the installation comes from the `JAVA_HOME` environment variable.
+        * Looks in the local file system for the Java Runtime Installation, which contains `Bootstrap Classes`, like `java.lang.Object` and `java.lang.String`. The location of the installation comes from the `JAVA_HOME` environment variable.
         * Looks for user-defined classes in the current directory where the java command is running.
         * Follows the `CLASSPATH` environment variable.
         * Follows the `-classpath` or `-jar` options passed to the java command on the command-line.
@@ -4641,7 +4641,7 @@
 
     * As you saw in the exercise solution video, a common pitfall of using the `Thread` class directly is that calling the `run()` method **doesn't actually start the thread in parallel, it runs it synchronously.**
 
-    * Since all the threads call `run()` in order, `abc` will print in the order that the `run()` methods were called. **If you want to run a thread in parallel, the correct method to call is ** `start()`.
+    * Since all the threads call `run()` in order, `abc` will print in the order that the `run()` methods were called. **If you want to run a thread in parallel, the correct method to call is** `start()`.
 
 * Theoretical Limits of Parallelism
 
@@ -5288,7 +5288,7 @@
 
     * You might have noticed that if you create a Semaphore with only 1 permit to give out, it behaves the same as a `ReentrantLock`.
 
-    * When a lock only allows one thread, you will sometimes here it called a mutex, which is a portmanteau of the term "mutual exclusion".
+    * When a lock only allows one thread, you will sometimes here it called a `mutex`, which is a portmanteau of the term "mutual exclusion".
 
 * Test Runner
     * ```java
@@ -5660,7 +5660,7 @@
         * `artifactId`: The specific identifier for this project. Combination of `artifactId` and `groupId` uniquely identifies your project.
         * `version`: An arbitrary additional identifier indicating which version of your artifact you're on. By incrementing this, you can use can use Maven to keep track of different versions of your project.
 
-        * ![pom](./images/pom.xml)
+        * ![pom](./images/pom.png)
     
     * ```xml
         <project>
